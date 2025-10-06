@@ -3,14 +3,16 @@
 
 #include "spu.h"
 
-int DoPush (spu_t *processor);
-int DoPop (spu_t *processor);
-int DoAdd (spu_t *processor);
-int DoSub (spu_t *processor);
-int DoDiv (spu_t *processor);
-int DoMul (spu_t *processor);
-int DoSqrt (spu_t *processor);
-int DoOut (spu_t *processor);
-int DoIn (spu_t *processor);
+int DoPush  (spu_t *spu);
+int DoPop   (spu_t *spu);
+int DoAdd   (spu_t *spu);
+int DoSub   (spu_t *spu);
+int DoDiv   (spu_t *spu);
+int DoMul   (spu_t *spu);
+int DoSqrt  (spu_t *spu);
+int DoOut   (spu_t *spu);
+int DoIn    (spu_t *spu);
+int DoPushr (spu_t *spu);
+int DoPopr  (spu_t *spu);
 
 #endif // K_SPU_COMMANDS

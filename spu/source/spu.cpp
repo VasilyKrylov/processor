@@ -113,15 +113,17 @@ int SpuRun (spu_t *spu)
 
         switch (spu->bytecode[spu->ip])
         {
-            case SPU_PUSH:  status = DoPush (spu); break;
-            case SPU_POP:   status = DoPop  (spu); break;
-            case SPU_ADD:   status = DoAdd  (spu); break;
-            case SPU_SUB:   status = DoSub  (spu); break;
-            case SPU_DIV:   status = DoDiv  (spu); break;
-            case SPU_MUL:   status = DoMul  (spu); break;
-            case SUP_SQRT:  status = DoSqrt (spu); break;
-            case SPU_OUT:   status = DoOut  (spu); break;
-            case SPU_IN:    status = DoIn   (spu); break;
+            case SPU_PUSH:  status = DoPush  (spu); break;
+            case SPU_POP:   status = DoPop   (spu); break;
+            case SPU_ADD:   status = DoAdd   (spu); break;
+            case SPU_SUB:   status = DoSub   (spu); break;
+            case SPU_DIV:   status = DoDiv   (spu); break;
+            case SPU_MUL:   status = DoMul   (spu); break;
+            case SUP_SQRT:  status = DoSqrt  (spu); break;
+            case SPU_OUT:   status = DoOut   (spu); break;
+            case SPU_IN:    status = DoIn    (spu); break;
+            case SPU_PUSHR: status = DoPushr (spu); break;
+            case SPU_POPR:  status = DoPopr  (spu); break;
             case SPU_HLT:   return RE_OK;
             
             default:
@@ -134,9 +136,20 @@ int SpuRun (spu_t *spu)
         {
             RuntimePrintError (status);
         }
+
+        DEBUG_PRINT ("regs[%lu] = {", sizeof(spu->regs) / sizeof(spu->regs[0]));
+        for (size_t i = 0; i < sizeof(spu->regs) / sizeof(spu->regs[0]); i++)
+        {
+            DEBUG_PRINT ("%d ", spu->regs[i]);
+        }
+        DEBUG_PRINT ("%s", "}\n");
+
         STACK_DUMP (spu->stack, "in switch case")
-        // TODO: PROCESSOR_DUMP !!!!!!!!!!!!!!!
+        // TODO: new function: PROCESSOR_DUMP !!!!!!!!!!!!!!!
+
+#ifdef PRINT_DEBUG
         getchar();
+#endif // PRINT_DEBUG
     }
 
     return RE_OK;

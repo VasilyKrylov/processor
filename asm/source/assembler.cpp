@@ -17,17 +17,20 @@ struct command_t
     int requireArgument = 0;
 };
 
+// TODO: change requireArgument to int
 static const command_t commands[] = {
-    {.name = "PUSH", .bytecode =  SPU_PUSH, .requireArgument = 1}, // TODO: enum for bytecodes in common
-    {.name = "POP",  .bytecode =  SPU_POP, .requireArgument = 0}, // NOTE OPTIONAL: make requireArgument int
-    {.name = "ADD",  .bytecode =  SPU_ADD, .requireArgument = 0}, 
-    {.name = "SUB",  .bytecode =  SPU_SUB, .requireArgument = 0},
-    {.name = "DIV",  .bytecode =  SPU_DIV, .requireArgument = 0},
-    {.name = "MUL",  .bytecode =  SPU_MUL, .requireArgument = 0},
-    {.name = "SQRT", .bytecode =  SUP_SQRT, .requireArgument = 0},
-    {.name = "OUT",  .bytecode =  SPU_OUT, .requireArgument = 0},
-    {.name = "IN",   .bytecode =  SPU_IN, .requireArgument = 0},
-    {.name = "HLT",  .bytecode =  SPU_HLT, .requireArgument = 0},
+    {.name = "PUSH",  .bytecode =  SPU_PUSH,    .requireArgument = 1}, // TODO: enum for bytecodes in common
+    {.name = "POP",   .bytecode =  SPU_POP,     .requireArgument = 0}, // NOTE OPTIONAL: make requireArgument int
+    {.name = "ADD",   .bytecode =  SPU_ADD,     .requireArgument = 0}, 
+    {.name = "SUB",   .bytecode =  SPU_SUB,     .requireArgument = 0},
+    {.name = "DIV",   .bytecode =  SPU_DIV,     .requireArgument = 0},
+    {.name = "MUL",   .bytecode =  SPU_MUL,     .requireArgument = 0},
+    {.name = "SQRT",  .bytecode =  SUP_SQRT,    .requireArgument = 0},
+    {.name = "OUT",   .bytecode =  SPU_OUT,     .requireArgument = 0},
+    {.name = "IN",    .bytecode =  SPU_IN,      .requireArgument = 0},
+    {.name = "PUSHR", .bytecode =  SPU_PUSHR,   .requireArgument = 1},
+    {.name = "POPR",  .bytecode =  SPU_POPR,    .requireArgument = 1},
+    {.name = "HLT",   .bytecode =  SPU_HLT,     .requireArgument = 0},
 };
 
 static const size_t CommandsNumber = sizeof(commands) / sizeof(command_t);
@@ -106,8 +109,15 @@ int Assemble (asm_t *myAsm)
                             return ASSEMBLER_MISSING_ARGUMENT; // TODO: error_code
                         }
                         // FIXME: check for buffer overflow
-                        // FIXME: check if operand is correct
-                        myAsm->bytecode[bytecodeIdx] = atoi(argument);
+                        // FIXME: check if operand is 
+                        
+                        // FIXME: switch between register encoding and number in push
+                        if (myAsm->bytecode[bytecodeIdx - 1] == SPU_PUSH)
+                            myAsm->bytecode[bytecodeIdx] = atoi(argument);
+                        else
+                            myAsm->bytecode[bytecodeIdx] = argument[1] - 'A';
+                        // FIXME: just shit
+
                         bytecodeIdx++; 
 
                         argument = strtok_r (NULL, argumentsDelimiter, &operandsSavePtr);
