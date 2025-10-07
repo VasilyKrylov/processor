@@ -68,8 +68,9 @@ enum stackErrors // FIXME: make enum class
     DATA_CANARY_END_OVERWRITE       = 1 << 7,
     POISON_VALUE_IN_DATA            = 1 << 8,
     WRONG_VALUE_IN_POISON           = 1 << 9,
-    TRYING_TO_POP_FROM_EMPTY_STACK  = 1 << 10 
+    TRYING_TO_POP_FROM_EMPTY_STACK  = 1 << 10
 };
+
 void StackPrintError (int error);
 int StackError (stack_t *stack);
 int StackCtor (stack_t *stack, size_t capacity

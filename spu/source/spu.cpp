@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #include "spu.h"
 
@@ -12,6 +11,8 @@
 #include "debug.h"
 #include "file.h"
 #include "utils.h"
+
+#include <math.h>
 
 int SpuCtor (spu_t *spu, char *inputFileName
             ON_DEBUG(, spuVarInfo_t varInfo))
@@ -111,6 +112,8 @@ int SpuRun (spu_t *spu)
         if (status != RE_OK)
         {
             RuntimePrintError (status);
+            
+            return status;
         }
 
         // DEBUG_PRINT ("regs[%lu] = {", sizeof(spu->regs) / sizeof(spu->regs[0]));
