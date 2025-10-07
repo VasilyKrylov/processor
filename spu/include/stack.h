@@ -12,7 +12,7 @@ const stackDataType CANARY = (stackDataType) 0xEDAc0ffe;
 const stackDataType POISON = 1337228272;
 
 #ifdef PRINT_DEBUG
-    struct varInfo_t 
+    struct varInfo_t // FIXME: move to common
     {
         const char *name;
         const char *file;
@@ -78,6 +78,6 @@ int StackPush (stack_t *stack, stackDataType value);
 int StackPop (stack_t *stack, stackDataType *value);
 int StackDtor (stack_t *stack);
 void StackDump (stack_t *stack, const char *comment,
-                const char *_FILE, int _LINE, const char * _FUNC);
+                const char *file, int line, const char * func);
 
 #endif // K_STACK_H

@@ -21,7 +21,7 @@ int main (int argc, char **argv)
     spu_t processor = {}; // NOTE: but why I should write = {};
                           // if there is NO default values in spu_t
                           // and I call ProcessorCtor on the next line
-    SpuCtor (&processor, argv[1]);
+    SPU_CTOR(&processor, argv[1]);
 
     // TODO: SpuVerify()
 

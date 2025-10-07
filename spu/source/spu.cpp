@@ -13,9 +13,13 @@
 #include "file.h"
 #include "utils.h"
 
-int SpuCtor (spu_t *spu, char *inputFileName)
+int SpuCtor (spu_t *spu, char *inputFileName
+            ON_DEBUG(, spuVarInfo_t varInfo))
 {
     STACK_CREATE (&spu->stack, 10)
+#ifdef PRINT_DEBUG
+    spu->varInfo = varInfo;
+#endif // PRINT_DEBUG
 
     size_t bufferLen = 0;
     char *buffer = ReadFile (inputFileName, &bufferLen);
@@ -24,34 +28,6 @@ int SpuCtor (spu_t *spu, char *inputFileName)
     {
         return COMMON_NULL_POINTER;
     }
-    // TODO: function from onegin what returns buffer
-    // FILE *inputFile = fopen (inputFileName, "r");
-    // if (inputFile == NULL)
-    // {
-    //     perror ("Error opening input file");
-
-    //     return -1;
-    // }
-
-    // size_t fileSize = GetFileSize (inputFileName, );
-
-    // char *buffer = (char *) calloc (fileSize + 1, sizeof(int));
-    // if (buffer == NULL)
-    // {
-    //     perror ("Error allocating memory for buffer");
-
-    //     return -1;
-    // }
-    
-    // size_t readedChars = fread (buffer, sizeof(char), fileSize, inputFile);
-    // if (readedChars < fileSize)
-    // {
-    //     perror ("Error while reading from file");
-
-    //     return -1;
-    // }
-    // DEBUG_LOG ("readedChars: %lu", readedChars);
-    // end of to do
 
     spu->bytecodeCnt = CountChrs (buffer, " ") + 1; // FIXME: CountChrs()
     spu->bytecode = (int *) calloc (spu->bytecodeCnt, sizeof(int));
@@ -137,14 +113,14 @@ int SpuRun (spu_t *spu)
             RuntimePrintError (status);
         }
 
-        DEBUG_PRINT ("regs[%lu] = {", sizeof(spu->regs) / sizeof(spu->regs[0]));
-        for (size_t i = 0; i < sizeof(spu->regs) / sizeof(spu->regs[0]); i++)
-        {
-            DEBUG_PRINT ("%d ", spu->regs[i]);
-        }
-        DEBUG_PRINT ("%s", "}\n");
+        // DEBUG_PRINT ("regs[%lu] = {", sizeof(spu->regs) / sizeof(spu->regs[0]));
+        // for (size_t i = 0; i < sizeof(spu->regs) / sizeof(spu->regs[0]); i++)
+        // {
+        //     DEBUG_PRINT ("%d ", spu->regs[i]);
+        // }
+        // DEBUG_PRINT ("%s", "}\n");
 
-        STACK_DUMP (spu->stack, "in switch case")
+        SPU_DUMP (spu, "in switch case")
         // TODO: new function: PROCESSOR_DUMP !!!!!!!!!!!!!!!
 
 #ifdef PRINT_DEBUG
@@ -169,7 +145,7 @@ void RuntimePrintError (int error)
     if (error & RE_NOT_ENOGUH_ELEMENTS_IN_STACK)   printf("%s", "There is no enough elements on stack to run instruction!\n");
     if (error & RE_DIVISION_BY_ZERO)               printf("%s", "Bro, you can't divide by zero -_-\n");
     if (error & RE_SQRT_NEGATIVE_ARGUMENT)         printf("%s", "You can't calculate square root for negative value -_-\n");
-    if (error & RE_INVALID_INPUT)         printf("%s", "Bro, input what you asked to...");
+    if (error & RE_INVALID_INPUT)                  printf("%s", "Bro, input what you asked to...");
 
     printf("%s", COLOR_END);
 }
@@ -179,7 +155,55 @@ int SpuVerify (spu_t *spu)
     int error = SPU_OK;
 
     if (spu->bytecode == NULL)              error |= SPU_BYTECODE_NULL;
-    if (spu->ip > spu->bytecodeCnt) error |= SPU_BYTECODE_OVERFLOW;
+    if (spu->ip > spu->bytecodeCnt)         error |= SPU_BYTECODE_OVERFLOW;
     
     return error;
+}
+
+void SpuDump (spu_t *spu, const char *comment,
+              const char *file, int line, const char * func)
+{
+    printf ("spu [%p]", spu);
+#ifdef PRINT_DEBUG
+    printf (" \"%s\" %s:%d %s()", spu->varInfo.name,
+                                 spu->varInfo.file,
+                                 spu->varInfo.line,
+                                 spu->varInfo.func);
+#endif // PRINT_DEBUG
+    puts ("");
+    printf ("called at %s:%d %s()\n", file, line, func);
+    printf ("reason: \"%s\"\n", comment);
+
+    printf("%s", "{\n");
+    printf("\tip          \t = %lu;\n", spu->ip);
+    printf("\tbytecodeCnt \t = %lu;\n", spu->bytecodeCnt);
+    
+    printf("\tregs[%lu]   \t = [%p]\n", sizeof (spu->regs) / sizeof (spu->regs[0]), spu->regs);
+    printf("%s", "\t{\n");
+    for (size_t i = 0; i < sizeof (spu->regs) / sizeof (spu->regs[0]); i++)
+    {
+        printf("\t\tR%cX = %d;\n", char('A' + i), spu->regs[i]);
+    }
+    printf("%s", "\t}\n");
+    
+    printf("\tbytecode[%lu]   \t = [%p]\n", spu->bytecodeCnt, spu->bytecode);
+    printf("%s", "\t{\n");
+    for (size_t i = 0; i < spu->bytecodeCnt; i++)
+    {
+        printf ("%s", "\t\t");
+
+        if (i == spu->ip)
+            printf ("%s", "->");
+        else 
+            printf ("%s", "  ");
+        
+        printf("\t\t[%lu] = %d\n", i, spu->bytecode[i]); 
+        // TODO: hex dump 
+    }
+    printf("%s", "\t}\n");
+
+    
+    printf("%s", "}\n");
+    
+    STACK_DUMP (spu->stack, comment)
 }
