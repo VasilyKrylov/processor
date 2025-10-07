@@ -150,16 +150,6 @@ void RuntimePrintError (int error)
     printf("%s", COLOR_END);
 }
 
-int SpuVerify (spu_t *spu)
-{
-    int error = SPU_OK;
-
-    if (spu->bytecode == NULL)              error |= SPU_BYTECODE_NULL;
-    if (spu->ip > spu->bytecodeCnt)         error |= SPU_BYTECODE_OVERFLOW;
-    
-    return error;
-}
-
 void SpuDump (spu_t *spu, const char *comment,
               const char *file, int line, const char * func)
 {
@@ -206,4 +196,26 @@ void SpuDump (spu_t *spu, const char *comment,
     printf("%s", "}\n");
     
     STACK_DUMP (spu->stack, comment)
+}
+
+int SpuError (spu_t *spu)
+{
+    int error = SPU_OK;
+
+    if (spu == NULL)
+    {
+        error |= SPU_NULL_STRUCT;
+        return error;
+    }    
+    if (spu->bytecode == NULL)
+    {
+        error |= SPU_BYTECODE_NULL;
+        return error;
+    }
+    if (spu->ip > spu->bytecodeCnt)
+    {
+        error |= SPU_BYTECODE_OVERFLOW;
+    }
+
+    return error;
 }

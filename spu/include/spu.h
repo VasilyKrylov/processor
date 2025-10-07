@@ -7,6 +7,7 @@
 enum spuErrors 
 {
     SPU_OK                  = 0,
+    SPU_NULL_STRUCT         = 1 << 0,
     SPU_BYTECODE_NULL       = 1 << 0,
     SPU_BYTECODE_OVERFLOW   = 1 << 1
 };
@@ -39,11 +40,11 @@ enum runtimeErrors
                                                                      .file = __FILE__,             \
                                                                      .line = __LINE__,             \
                                                                      .func = __func__});
-    #define SPU_ERROR(stack) SpuError (stack);  
+    #define SPU_ERROR(spu) SpuError (spu);  
 #else
-    #define SPU_DUMP(stack, comment) 
+    #define SPU_DUMP(spu, comment) 
     #define SPU_CTOR(spuName, size) SpuCtor (spuName, size);
-    #define SPU_ERROR(stack) OK;
+    #define SPU_ERROR(spu) SPU_OK;
 #endif // PRINT_DEBUG
 
 struct spu_t
@@ -76,5 +77,6 @@ int SpuVerify (spu_t *spu);
 void RuntimePrintError (int error); // TODO: does I really need this function ?
 void SpuDump (spu_t *spu, const char *comment,
               const char *file, int line, const char * func);
+int SpuError (spu_t *spu);
 
 #endif // K_SPU_H

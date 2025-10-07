@@ -9,6 +9,7 @@
 #include "stack.h"
 #include "utils.h"
 
+// TODO: store error code in VarInfo in stack and processor
 int main (int argc, char **argv)
 {
     if (argc != 2)
