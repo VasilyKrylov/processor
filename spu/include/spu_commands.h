@@ -14,5 +14,6 @@ int DoOut   (spu_t *spu);
 int DoIn    (spu_t *spu);
 int DoPushr (spu_t *spu);
 int DoPopr  (spu_t *spu);
+int DoJmp   (spu_t *spu);
 
 #endif // K_SPU_COMMANDS

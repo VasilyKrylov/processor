@@ -81,11 +81,16 @@ int SpuRun (spu_t *spu)
     if (spu == NULL) return COMMON_NULL_POINTER;
 
     DEBUG_LOG ("%s", "HELLO FRIENDS, TODAY WE WILL RUN SOFT PROCESSOR UNIT");
-    DEBUG_LOG ("%s", "LET'S FUCKING GOOOOOOOOOOOOOOOOOOOOOOOOOO");
+    DEBUG_LOG ("%s", "LET'S GOOOOOOOOOOOOOOOOOOOOOOOOOO");
 
-    for (; spu->ip < spu->bytecodeCnt; spu->ip++)
+    for (; spu->ip < spu->bytecodeCnt ;)
     {
-        DEBUG_LOG ("processor->ip = %lu;", spu->ip); // MAKE SpuDump
+        SPU_DUMP (spu, "in switch case")
+
+#ifdef PRINT_DEBUG
+        getchar();
+#endif // PRINT_DEBUG
+
         int status = 0;
 
         switch (spu->bytecode[spu->ip])
@@ -101,6 +106,7 @@ int SpuRun (spu_t *spu)
             case SPU_IN:    status = DoIn    (spu); break;
             case SPU_PUSHR: status = DoPushr (spu); break;
             case SPU_POPR:  status = DoPopr  (spu); break;
+            case SPU_JMP:   status = DoJmp   (spu); break;
             case SPU_HLT:   return RE_OK;
             
             default:
@@ -111,24 +117,11 @@ int SpuRun (spu_t *spu)
 
         if (status != RE_OK)
         {
-            RuntimePrintError (status);
-            
+            RuntimePrintError (status); // maybe delete this function
+
             return status;
         }
 
-        // DEBUG_PRINT ("regs[%lu] = {", sizeof(spu->regs) / sizeof(spu->regs[0]));
-        // for (size_t i = 0; i < sizeof(spu->regs) / sizeof(spu->regs[0]); i++)
-        // {
-        //     DEBUG_PRINT ("%d ", spu->regs[i]);
-        // }
-        // DEBUG_PRINT ("%s", "}\n");
-
-        SPU_DUMP (spu, "in switch case")
-        // TODO: new function: PROCESSOR_DUMP !!!!!!!!!!!!!!!
-
-#ifdef PRINT_DEBUG
-        getchar();
-#endif // PRINT_DEBUG
     }
 
     return RE_OK;
@@ -190,7 +183,7 @@ void SpuDump (spu_t *spu, const char *comment,
         else 
             printf ("%s", "  ");
         
-        printf("\t\t[%lu] = %d\n", i, spu->bytecode[i]); 
+        printf("[%lu] = %d\n", i, spu->bytecode[i]); 
         // TODO: hex dump 
     }
     printf("%s", "\t}\n");

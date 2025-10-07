@@ -26,6 +26,8 @@ int DoPush (spu_t *spu)
         DEBUG_LOG ("\tstatus = %d", status);
     }
 
+    spu->ip += 1;
+
     return RE_OK;
 }
 
@@ -39,6 +41,8 @@ int DoPop (spu_t *spu)
     {
         DEBUG_LOG ("\tstack status = %d; // looks like not good program loaded to spu...", status);
     }
+
+    spu->ip += 1;
 
     return status;
 }
@@ -65,6 +69,8 @@ int DoAdd (spu_t *spu)
 
     StackPush (&spu->stack, a + b);
 
+    spu->ip += 1;
+
     return RE_OK;
 }
 
@@ -86,6 +92,9 @@ int DoSub (spu_t *spu)
     DEBUG_LOG ("\ta, b: %d %d", a, b);
 
     StackPush (&spu->stack, b - a);
+
+    spu->ip += 1;
+
     return RE_OK;
 }
 
@@ -114,6 +123,8 @@ int DoDiv (spu_t *spu)
     
     DEBUG_LOG ("\ta, b: %d %d", a, b);
     
+    spu->ip += 1;
+
     return RE_OK;
 }
 
@@ -136,6 +147,8 @@ int DoMul (spu_t *spu)
     StackPush (&spu->stack, a * b);
     
     DEBUG_LOG ("\ta, b: %d %d", a, b);
+
+    spu->ip += 1;
 
     return RE_OK;
 }
@@ -167,6 +180,8 @@ int DoSqrt (spu_t *spu)
     DEBUG_LOG ("\tValue to calculate sqrt: %d", a);
     DEBUG_LOG ("\tSqrt: %d", (stackDataType) sqrt (a));
     
+    spu->ip += 1;
+
     return RE_OK;
 }
 
@@ -182,7 +197,9 @@ int DoOut (spu_t *spu)
     stackDataType outValue = 0;
     StackPop (&spu->stack, &outValue);
 
-    printf ("%d\n", outValue); // TODO: check printf for error?
+    printf ("OUT: %d\n", outValue); // TODO: check printf for error?
+
+    spu->ip += 1;
 
     return RE_OK;
 }
@@ -204,6 +221,8 @@ int DoIn (spu_t *spu)
     StackPush (&spu->stack, inputValue);
 
     DEBUG_PRINT ("inputValue = %d;\n", inputValue); // TODO: check printf for error?
+
+    spu->ip += 1;
 
     return RE_OK;
 }
@@ -232,6 +251,8 @@ int DoPushr (spu_t *spu)
     {
         DEBUG_LOG ("\tstatus = %d", status);
     }
+
+    spu->ip += 1;
 
     return RE_OK;
 }
@@ -262,5 +283,21 @@ int DoPopr (spu_t *spu)
 
     DEBUG_LOG ("R%cX = %d;\n", char('A' + regIdx), spu->regs[regIdx]); // TODO: make function to get register name by its index
 
+    spu->ip += 1;
+
+    return RE_OK;
+}
+
+int DoJmp (spu_t *spu)
+{
+    if (spu->ip + 1 >= spu->bytecodeCnt) 
+    {
+        ERROR ("%s", "Missing required argument for JUMP command")
+
+        return RE_MISSING_ARGUMENT;
+    }
+
+    spu->ip = (size_t) spu->bytecode[spu->ip + 1];
+    
     return RE_OK;
 }
