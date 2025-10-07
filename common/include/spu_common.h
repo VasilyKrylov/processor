@@ -12,6 +12,7 @@ enum commandsBytecode
     SUP_SQRT    =  7,
     SPU_OUT     =  8,
     SPU_IN      =  9,
+    SPU_JMP    =  10,
     SPU_PUSHR   =  35,
     SPU_POPR    =  42,
     SPU_HLT     = -1,

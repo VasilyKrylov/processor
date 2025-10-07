@@ -30,6 +30,7 @@ static const command_t commands[] = {
     {.name = "IN",    .bytecode =  SPU_IN,      .requireArgument = 0},
     {.name = "PUSHR", .bytecode =  SPU_PUSHR,   .requireArgument = 1},
     {.name = "POPR",  .bytecode =  SPU_POPR,    .requireArgument = 1},
+    {.name = "JUMP",  .bytecode =  SPU_JMP,    .requireArgument = 1},
     {.name = "HLT",   .bytecode =  SPU_HLT,     .requireArgument = 0},
 };
 
@@ -39,15 +40,19 @@ size_t CountOperands (char *s, const char *delimiter);
 
 int AsmCtorAndRead (char *inputFileName, asm_t *myAsm)
 {
+    DEBUG_LOG ("%s", "AsmCtorAndRead()");
+
     int status = TextCtor (inputFileName, &(myAsm->text));
+
     DEBUG_LOG ("buffer: \"%s\"\n", myAsm->text.buffer);
+    
     if (status != 0)
     {
         return 1;
     }
     
-    // FIXME: replace \n with \0
-    // FIXME: replace ; with \0
+    // TODO: replace \n with \0
+    // TODO: replace ; with \0
 
     myAsm->instructionsCnt = CountOperands (myAsm->text.buffer, " \n"); // TODO: make constant
 
@@ -56,8 +61,8 @@ int AsmCtorAndRead (char *inputFileName, asm_t *myAsm)
     return 0;
 }
 
-// FIXME: split on functions 
-// FIXME: new lines should be ignored
+// FIXME: split on functions  !!!!!!!!!!!!!!!!!
+// FIXME: replace strok_r with sscanf() and onegin functions !!!!!!!!!!!!!!!!
 int Assemble (asm_t *myAsm)
 {
     DEBUG_LOG ("buffer: \"%s\"\n", myAsm->text.buffer);
@@ -112,11 +117,18 @@ int Assemble (asm_t *myAsm)
                         // FIXME: check if operand is 
                         
                         // FIXME: switch between register encoding and number in push
-                        if (myAsm->bytecode[bytecodeIdx - 1] == SPU_PUSH)
-                            myAsm->bytecode[bytecodeIdx] = atoi(argument);
-                        else
+                        DEBUG_LOG ("\t\tbytecode[bytecodeIdx - 1] = %d;", myAsm->bytecode[bytecodeIdx - 1]);
+                        if (myAsm->bytecode[bytecodeIdx - 1] == SPU_PUSHR ||
+                            myAsm->bytecode[bytecodeIdx - 1] == SPU_POPR)
+                        {
                             myAsm->bytecode[bytecodeIdx] = argument[1] - 'A';
-                        // FIXME: just shit
+                        }
+                        else
+                        {
+                            DEBUG_LOG ("\t\t %s", "atoi");
+                            myAsm->bytecode[bytecodeIdx] = atoi(argument);
+                        }
+                        // FIXME: peace of shit
 
                         bytecodeIdx++; 
 

@@ -115,7 +115,7 @@ line *MakePointers (char *buffer, char lineSeparator)
     assert (buffer);
 
     size_t curIdx = 0;
-    line *linesArray = (line *) calloc (CountNotEmptyLines (buffer, lineSeparator) + 1, sizeof(line));
+    line *linesArray = (line *) calloc (CountLines (buffer, lineSeparator) + 1, sizeof(line));
     
     if (linesArray == NULL) 
     {
@@ -194,7 +194,10 @@ int TextCtor (char *inputFileName, text_t *text)
     text->buffer = ReadFile (inputFileName, &text->bufferLen); // FIXME: also returns file size
     
     if (text->buffer == NULL) return COMMON_NULL_POINTER; 
-    
+
+    DEBUG_PRINT ("text->buffer: \"%s\";", text->buffer);
+    DEBUG_PRINT ("text->bufferLen: \"%lu\";", text->bufferLen);
+
     text->lines = MakePointers (text->buffer, '\n');
 
     if (text->lines == NULL) return COMMON_NULL_POINTER;
