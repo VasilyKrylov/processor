@@ -31,7 +31,7 @@ const stackDataType POISON = 1337228272;
 #else
     #define STACK_DUMP(stack, comment) 
     #define STACK_CREATE(stackName, size) StackCtor (stackName, size);
-    #define STACK_ERROR(stack) OK;
+    #define STACK_ERROR(stack) STACK_OK;
 #endif // PRINT_DEBUG
 
 struct stack_t 
@@ -54,21 +54,20 @@ struct stack_t
 };
 
 // TODO: add class to other enum's
-
 enum stackErrors // FIXME: make enum class
 {
-    OK                              = 0,
-    NULL_STRUCT                     = 1 << 0,
-    NULL_DATA                       = 1 << 1,
-    STACK_OVERFLOW                  = 1 << 2,
-    BIG_CAPACITY                    = 1 << 3,
-    STRUCT_CANARY_START_OVERWRITE   = 1 << 4,
-    STRUCT_CANARY_END_OVERWRITE     = 1 << 5,
-    DATA_CANARY_START_OVERWRITE     = 1 << 6,
-    DATA_CANARY_END_OVERWRITE       = 1 << 7,
-    POISON_VALUE_IN_DATA            = 1 << 8,
-    WRONG_VALUE_IN_POISON           = 1 << 9,
-    TRYING_TO_POP_FROM_EMPTY_STACK  = 1 << 10
+    STACK_OK                              = 0,
+    STACK_NULL_STRUCT                     = 1 << 0,
+    STACK_NULL_DATA                       = 1 << 1,
+    STACK_OVERFLOW                        = 1 << 2,
+    STACK_BIG_CAPACITY                    = 1 << 3,
+    STACK_STRUCT_CANARY_START_OVERWRITE   = 1 << 4,
+    STACK_STRUCT_CANARY_END_OVERWRITE     = 1 << 5,
+    STACK_DATA_CANARY_START_OVERWRITE     = 1 << 6,
+    STACK_DATA_CANARY_END_OVERWRITE       = 1 << 7,
+    STACK_POISON_VALUE_IN_DATA            = 1 << 8,
+    STACK_WRONG_VALUE_IN_POISON           = 1 << 9,
+    STACK_TRYING_TO_POP_FROM_EMPTY_STACK  = 1 << 10
 };
 
 void StackPrintError (int error);

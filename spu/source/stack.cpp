@@ -49,28 +49,28 @@ void StackPrintError (int error)
 
     printf("%s", RED_BOLD_COLOR);
 
-    if (error & NULL_STRUCT)                    printf("%s", "Stack struct is null!\n");
-    if (error & NULL_DATA)                      printf("%s", "Stack data is null!\n");
+    if (error & STACK_NULL_STRUCT)                    printf("%s", "Stack struct is null!\n");
+    if (error & STACK_NULL_DATA)                      printf("%s", "Stack data is null!\n");
     if (error & STACK_OVERFLOW)                 printf("%s", "Stack size grater than stack capacity\n");
-    if (error & BIG_CAPACITY)	                printf("%s", "Stack capacity is too big, sorry bro\n");
-    if (error & STRUCT_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the stack structure has been overwritten\n");
-    if (error & STRUCT_CANARY_END_OVERWRITE)	printf("%s", "End of the stack structure has been overwritten\n");
-    if (error & DATA_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the data field has been overwritten\n");
-    if (error & DATA_CANARY_END_OVERWRITE)	    printf("%s", "End of the data field has been overwritten\n");
-    if (error & POISON_VALUE_IN_DATA)	        printf("%s", "There is poison value in stack\n");
-    if (error & WRONG_VALUE_IN_POISON)	        printf("%s", "There is NOT poison value in unused section of stack\n");
-    if (error & TRYING_TO_POP_FROM_EMPTY_STACK)	printf("%s", "Stack is empty, but StackPop() called\n");
+    if (error & STACK_BIG_CAPACITY)	                printf("%s", "Stack capacity is too big, sorry bro\n");
+    if (error & STACK_STRUCT_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the stack structure has been overwritten\n");
+    if (error & STACK_STRUCT_CANARY_END_OVERWRITE)	printf("%s", "End of the stack structure has been overwritten\n");
+    if (error & STACK_DATA_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the data field has been overwritten\n");
+    if (error & STACK_DATA_CANARY_END_OVERWRITE)	    printf("%s", "End of the data field has been overwritten\n");
+    if (error & STACK_POISON_VALUE_IN_DATA)	        printf("%s", "There is poison value in stack\n");
+    if (error & STACK_WRONG_VALUE_IN_POISON)	        printf("%s", "There is NOT poison value in unused section of stack\n");
+    if (error & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)	printf("%s", "Stack is empty, but StackPop() called\n");
 
     printf("%s", COLOR_END);
 }
 
 int StackError (stack_t *stack)
 {
-    int error = OK;
+    int error = STACK_OK;
 
     if (stack == NULL)
     {
-        error |= NULL_STRUCT;
+        error |= STACK_NULL_STRUCT;
         return error;
     }
     if (stack->size > stack->capacity)
@@ -79,30 +79,30 @@ int StackError (stack_t *stack)
     }
     if (stack->capacity > maxCapacity)
     {
-        error |= BIG_CAPACITY;
+        error |= STACK_BIG_CAPACITY;
     }
     if (stack->data == NULL)
     {
-        error |= NULL_DATA;
+        error |= STACK_NULL_DATA;
         return error;
     }
 
 #ifdef STACK_CANARY
     if (stack->canaryStart != CANARY) 
     {
-        error |= STRUCT_CANARY_START_OVERWRITE;
+        error |= STACK_STRUCT_CANARY_START_OVERWRITE;
     }
     if (stack->canaryEnd != CANARY)
     {
-        error |= STRUCT_CANARY_END_OVERWRITE;
+        error |= STACK_STRUCT_CANARY_END_OVERWRITE;
     }
     if (*GetCanaryStart (stack) != CANARY)
     {
-        error |= DATA_CANARY_START_OVERWRITE;
+        error |= STACK_DATA_CANARY_START_OVERWRITE;
     }
     if (*GetCanaryEnd (stack) != CANARY)
     {
-        error |= DATA_CANARY_END_OVERWRITE;
+        error |= STACK_DATA_CANARY_END_OVERWRITE;
     }
 #endif // STACK_CANARY
 
@@ -111,7 +111,7 @@ int StackError (stack_t *stack)
     {
         if (stack->data[i] == POISON)
         {
-            error |= POISON_VALUE_IN_DATA;
+            error |= STACK_POISON_VALUE_IN_DATA;
             break;
         }
     }
@@ -119,7 +119,7 @@ int StackError (stack_t *stack)
     {
         if (stack->data[i] != POISON)
         {
-            error |= WRONG_VALUE_IN_POISON;
+            error |= STACK_WRONG_VALUE_IN_POISON;
             break;
         }
     }
@@ -132,9 +132,9 @@ int StackCtor (stack_t *stack, size_t capacity
                ON_DEBUG (, varInfo_t varInfo))
 {
     if (stack == NULL)
-        return NULL_STRUCT;
+        return STACK_NULL_STRUCT;
     if (capacity > maxCapacity)
-        return BIG_CAPACITY;
+        return STACK_BIG_CAPACITY;
     
     stack->size = 0;
     stack->capacity = capacity;
@@ -145,7 +145,7 @@ int StackCtor (stack_t *stack, size_t capacity
 #endif // STACK_CANARY
     
     if (stack->data == NULL)
-        return NULL_DATA;
+        return STACK_NULL_DATA;
 
 
 #ifdef STACK_CANARY
@@ -171,7 +171,7 @@ int StackCtor (stack_t *stack, size_t capacity
 int StackPush (stack_t *stack, stackDataType value)
 {
     int error = STACK_ERROR (stack);
-    if (error != OK) 
+    if (error != STACK_OK) 
         return error;
 
     if (stack->size == stack->capacity)
@@ -187,7 +187,7 @@ int StackPush (stack_t *stack, stackDataType value)
 #endif // STACK_CANARY
 
         if (GetOrigData(newData) == NULL)
-            return NULL_DATA;
+            return STACK_NULL_DATA;
 
         stack->data = newData;
 #ifdef STACK_CANARY
@@ -211,11 +211,11 @@ int StackPush (stack_t *stack, stackDataType value)
 int StackPop (stack_t *stack, stackDataType *value)
 {
     int error = STACK_ERROR (stack);
-    if (error != OK) 
+    if (error != STACK_OK) 
         return error;
 
     if (stack->size == 0)
-        return TRYING_TO_POP_FROM_EMPTY_STACK;
+        return STACK_TRYING_TO_POP_FROM_EMPTY_STACK;
 
     if (stack->size * 4 <= stack->capacity)
     {
@@ -228,7 +228,7 @@ int StackPop (stack_t *stack, stackDataType *value)
 #endif // STACK_CANARY
 
         if (GetOrigData (newData) == NULL)
-            return NULL_DATA;
+            return STACK_NULL_DATA;
 
         stack->data = newData;
         
@@ -248,7 +248,7 @@ int StackPop (stack_t *stack, stackDataType *value)
 int StackDtor (stack_t *stack)
 {
     if (stack == NULL)
-        return NULL_STRUCT;
+        return STACK_NULL_STRUCT;
 
     int error = STACK_ERROR (stack);
 

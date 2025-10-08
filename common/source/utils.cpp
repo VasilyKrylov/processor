@@ -18,23 +18,33 @@ void Swap (size_t *a, size_t *b)
 }
 
 // counts how many chars in elements presented in s
-size_t CountChrs (char *s, const char *elements)
+size_t CountChr (char *s, const char element)
 {
     size_t counter = 0;
+
     for (size_t i = 0; s[i] != '\0'; i++)
     {
-        for (size_t j = 0; elements[j] != '\0'; j++)
+        if (s[i] == element)
         {
-            if (s[i] == elements[j])
-            {
-                counter++;
-                break;
-            }
+            counter++;
         }
     }
 
     return counter;
 }
 
-// TODO: replaceChar
-// size_t ReplaceChar ()
+void StrReplace (char *s, const char *oldValues, const char newValue)
+{
+    for (size_t i = 0; s[i] != '\0'; i++)
+    {
+        for (size_t j = 0; oldValues[j] != '\0'; j++)
+        {
+            if (s[i] == oldValues[j])
+            {
+                s[i] = newValue;
+
+                break;
+            }
+        }
+    }
+}

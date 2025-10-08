@@ -21,7 +21,7 @@ int DoPush (spu_t *spu)
 
     DEBUG_LOG ("\tPushed %d on stack", spu->bytecode[spu->ip]);
     int status = StackPush (&spu->stack, spu->bytecode[spu->ip]);
-    if (status != OK) // FIXME: OK = STACK_OK
+    if (status != STACK_OK)
     {
         DEBUG_LOG ("\tstatus = %d", status);
     }
@@ -54,13 +54,12 @@ int DoAdd (spu_t *spu)
     {
         ERROR ("%s", "Error in ADD command, there are less than 2 elements on the stack");
         
-        return RE_NOT_ENOGUH_ELEMENTS_IN_STACK;
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
     DEBUG_LOG ("\tstack->size = %lu", spu->stack.size);
 
     stackDataType a = 0;
     stackDataType b = 0;
-
 
     StackPop (&spu->stack, &a); // TODO: check here; what?
     StackPop (&spu->stack, &b);
@@ -81,7 +80,7 @@ int DoSub (spu_t *spu)
     {
         ERROR ("%s", "Error in SUB command, there are less than 2 elements on the stack");
         
-        return RE_NOT_ENOGUH_ELEMENTS_IN_STACK;
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
 
     stackDataType a = 0;
@@ -105,7 +104,7 @@ int DoDiv (spu_t *spu)
     {
         ERROR ("%s", "Error in DIV command, there are less than 2 elements on the stack");
         
-        return RE_NOT_ENOGUH_ELEMENTS_IN_STACK;
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
 
     stackDataType a = 0;
@@ -118,8 +117,11 @@ int DoDiv (spu_t *spu)
     if (a == 0)
     {
         ERROR ("%s", "Error in DIV command, there are less than 2 elements on the stack");
+
+        return RE_DIVISION_BY_ZERO;
     }
-    StackPush (&spu->stack, b / a); // TODO: add check a != 0
+
+    StackPush (&spu->stack, b / a);
     
     DEBUG_LOG ("\ta, b: %d %d", a, b);
     
@@ -135,13 +137,13 @@ int DoMul (spu_t *spu)
     {
         ERROR ("%s", "Error in MUL command, there are less than 2 elements on the stack");
         
-        return RE_NOT_ENOGUH_ELEMENTS_IN_STACK;
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
 
     stackDataType a = 0;
     stackDataType b = 0;
 
-    StackPop (&spu->stack, &a); // TODO: should I check status?
+    StackPop (&spu->stack, &a); // TODO: check here
     StackPop (&spu->stack, &b);
 
     StackPush (&spu->stack, a * b);
@@ -162,7 +164,7 @@ int DoSqrt (spu_t *spu)
     {
         ERROR ("%s", "Error in MUL command, there are less than 2 elements on the stack");
         
-        return RE_NOT_ENOGUH_ELEMENTS_IN_STACK;
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
     stackDataType a = 0;
 
@@ -191,13 +193,13 @@ int DoOut (spu_t *spu)
     {
         ERROR ("%s", "Error in OUT command, there is less than 1 element on the stack");
 
-        return RE_NOT_ENOGUH_ELEMENTS_IN_STACK;
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
 
     stackDataType outValue = 0;
     StackPop (&spu->stack, &outValue);
 
-    printf ("OUT: %d\n", outValue); // TODO: check printf for error?
+    printf ("OUT: %d\n", outValue); 
 
     spu->ip += 1;
 
@@ -209,7 +211,7 @@ int DoIn (spu_t *spu)
     stackDataType inputValue = 0;
 
     printf ("%s", "Input integer number: ");
-    int status = scanf ("" STACK_FORMAT_STRING "", &inputValue);
+    int status = scanf (STACK_FORMAT_STRING, &inputValue);
 
     if (status != 1) 
     {
@@ -220,7 +222,7 @@ int DoIn (spu_t *spu)
 
     StackPush (&spu->stack, inputValue);
 
-    DEBUG_PRINT ("inputValue = %d;\n", inputValue); // TODO: check printf for error?
+    DEBUG_PRINT ("inputValue = %d;\n", inputValue); 
 
     spu->ip += 1;
 
@@ -241,13 +243,13 @@ int DoPushr (spu_t *spu)
     }
 
     int regIdx = spu->bytecode[spu->ip];
-    int regVal = spu->regs[regIdx];
+    int regVal = spu->regs[regIdx]; // FIXME check
 
     DEBUG_LOG ("R%cX = %d;\n", char('A' + regIdx), regVal); // TODO: make function to get register name by its index
 
     DEBUG_LOG ("\tPushed %d on stack", regVal);
     int status = StackPush (&spu->stack, regVal);
-    if (status != OK) 
+    if (status != STACK_OK) 
     {
         DEBUG_LOG ("\tstatus = %d", status);
     }
@@ -276,7 +278,7 @@ int DoPopr (spu_t *spu)
     int status = StackPop (&spu->stack, &stackValue);
     spu->regs[regIdx] = stackValue;
 
-    if (status != OK)
+    if (status != STACK_OK)
     {
         DEBUG_LOG ("\tstack status = %d; // looks like not good program loaded to spu...", status);
     }
@@ -290,14 +292,54 @@ int DoPopr (spu_t *spu)
 
 int DoJmp (spu_t *spu)
 {
-    if (spu->ip + 1 >= spu->bytecodeCnt) 
-    {
-        ERROR ("%s", "Missing required argument for JUMP command")
+    spu->ip++;
 
+    if (spu->ip >= spu->bytecodeCnt) 
+    {
+        ERROR ("%s", "Missing required argument for JMP command")
+        
         return RE_MISSING_ARGUMENT;
     }
 
-    spu->ip = (size_t) spu->bytecode[spu->ip + 1];
+    spu->ip = (size_t) spu->bytecode[spu->ip];
     
+    return RE_OK;
+}
+
+int DoJb (spu_t *spu)
+{
+    spu->ip++;
+
+    if (spu->ip >= spu->bytecodeCnt) 
+    {
+        ERROR ("%s", "Missing required argument for JUMP command")
+        
+        return RE_MISSING_ARGUMENT;
+    }
+
+    stackDataType first = 0;
+    stackDataType second = 0;
+    GetOperands (spu, &first, &second);
+
+    if (second < first)
+        spu->ip = (size_t) spu->bytecode[spu->ip];
+    else
+        spu->ip++;
+    
+    return RE_OK;
+}
+
+int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
+{
+    int status = StackPop (&spu->stack, first);
+    status    |= StackPop (&spu->stack, second);
+
+    if (status & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)
+    {
+        ERROR ("%s", "There is not enought elements on stack for JB command")
+
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
+    }
+
     return RE_OK;
 }

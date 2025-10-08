@@ -18,15 +18,15 @@ int main (int argc, char **argv)
 
         return 0;
     }
-    
-    // size_t numberOfOperands = 0;
 
     asm_t myAsm = {};
-    int status = AsmCtorAndRead (argv[1], &myAsm);
-    DEBUG_LOG ("buffer: \"%s\"\n", myAsm.text.buffer);
+
+    // TODO: CtorAndRead()
+    int status = AsmRead (&myAsm, argv[1]);
+
     if (status != 0)
     {
-        ERROR ("%s", "Error in AsmCtorAndRead()");
+        ERROR ("%s", "Error in AsmRead()");
     }
 
 
@@ -35,10 +35,7 @@ int main (int argc, char **argv)
     {
         ERROR ("%s", "Error while assembling")
         AsmDtor (&myAsm);
-        // function return 0 or 1
-        // 0 is ok
-        // 1 is error
-        // when to print error message
+        
         return status;
     }
 

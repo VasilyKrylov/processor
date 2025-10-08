@@ -9,7 +9,7 @@
 #include "stack.h"
 #include "utils.h"
 
-// TODO: store error code in VarInfo in stack and processor
+// TODO: store error code in VarInfo in stack and spu
 int main (int argc, char **argv)
 {
     if (argc != 2)
@@ -19,22 +19,27 @@ int main (int argc, char **argv)
         return 0;
     }
     
-    spu_t processor = {}; // NOTE: but why I should write = {};
-                          // if there is NO default values in spu_t
-                          // and I call ProcessorCtor on the next line
-    SPU_CTOR(&processor, argv[1]);
+    spu_t spu = {};
+    SPU_CTOR (&spu);
+    int result = SpuRead (&spu, argv[1]);
 
-    // TODO: SpuVerify()
-
-    int result = SpuRun (&processor);
     if (result != 0)
     {
-        SpuDtor (&processor);
+        SpuDtor (&spu);
 
-        return -1;
+        return result;
+    }
+    // TODO: SpuVerify()
+
+    result = SpuRun (&spu);
+    if (result != 0)
+    {
+        SpuDtor (&spu);
+
+        return result;
     }
 
-    SpuDtor (&processor);
+    SpuDtor (&spu);
 
     return 0;
 }

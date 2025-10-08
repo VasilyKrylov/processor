@@ -3,6 +3,15 @@
 
 #include "spu.h"
 
+#define CMP_BELOW               <
+#define CMP_BELOW_OR_EQUAL      <=
+#define CMP_ABOVE               >
+#define CMP_ABOVE_OR_EQUAL      >=
+#define CMP_EQUAL               ==
+#define CMP_NOT_EQUAL           !=
+
+int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second);
+
 int DoPush  (spu_t *spu);
 int DoPop   (spu_t *spu);
 int DoAdd   (spu_t *spu);
@@ -15,5 +24,6 @@ int DoIn    (spu_t *spu);
 int DoPushr (spu_t *spu);
 int DoPopr  (spu_t *spu);
 int DoJmp   (spu_t *spu);
+int DoJb    (spu_t *spu);
 
 #endif // K_SPU_COMMANDS

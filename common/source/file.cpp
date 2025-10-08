@@ -53,7 +53,6 @@ char *ReadFile (char *inputFileName, size_t *bufferLen)
         return NULL;
     }
 
-    // FIXME: converting ssize_t to size_t in lot of places
     ssize_t fileSize = GetFileSize (inputFileName);
     if (fileSize == -1)
     {
@@ -191,12 +190,9 @@ size_t CountNotEmptyLines (char *content, char lineSeparator)
 
 int TextCtor (char *inputFileName, text_t *text)
 {
-    text->buffer = ReadFile (inputFileName, &text->bufferLen); // FIXME: also returns file size
+    text->buffer = ReadFile (inputFileName, &text->bufferLen);
     
     if (text->buffer == NULL) return COMMON_NULL_POINTER; 
-
-    DEBUG_PRINT ("text->buffer: \"%s\";", text->buffer);
-    DEBUG_PRINT ("text->bufferLen: \"%lu\";", text->bufferLen);
 
     text->lines = MakePointers (text->buffer, '\n');
 

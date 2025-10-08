@@ -17,9 +17,14 @@ struct command_t
     int requireArgument = 0;
 };
 
+int AssembleCommand (asm_t *myAsm, const command_t *command, 
+                     char *lineStart, size_t lineNumber);
+bool IsRegisterCommand (int command);
+int GetRegisterBytecode (char *registerName, int *bytecode);
+
 // TODO: change requireArgument to int
 static const command_t commands[] = {
-    {.name = "PUSH",  .bytecode =  SPU_PUSH,    .requireArgument = 1}, // TODO: enum for bytecodes in common
+    {.name = "PUSH",  .bytecode =  SPU_PUSH,    .requireArgument = 1}, 
     {.name = "POP",   .bytecode =  SPU_POP,     .requireArgument = 0}, // NOTE OPTIONAL: make requireArgument int
     {.name = "ADD",   .bytecode =  SPU_ADD,     .requireArgument = 0}, 
     {.name = "SUB",   .bytecode =  SPU_SUB,     .requireArgument = 0},
@@ -30,17 +35,22 @@ static const command_t commands[] = {
     {.name = "IN",    .bytecode =  SPU_IN,      .requireArgument = 0},
     {.name = "PUSHR", .bytecode =  SPU_PUSHR,   .requireArgument = 1},
     {.name = "POPR",  .bytecode =  SPU_POPR,    .requireArgument = 1},
-    {.name = "JUMP",  .bytecode =  SPU_JMP,    .requireArgument = 1},
+    {.name = "JMP",   .bytecode =  SPU_JMP,     .requireArgument = 1},
+    {.name = "JB",    .bytecode =  SPU_JB,      .requireArgument = 1},
+    {.name = "JBE",   .bytecode =  SPU_JBE,     .requireArgument = 1},
+    {.name = "JA",    .bytecode =  SPU_JA,      .requireArgument = 1},
+    {.name = "JAE",   .bytecode =  SPU_JAE,     .requireArgument = 1},
+    {.name = "JE",    .bytecode =  SPU_JE,      .requireArgument = 1},
+    {.name = "JNE",   .bytecode =  SPU_JNE,     .requireArgument = 1},
     {.name = "HLT",   .bytecode =  SPU_HLT,     .requireArgument = 0},
+    // TODO: COMMAND (IN, 0)
 };
 
 static const size_t CommandsNumber = sizeof(commands) / sizeof(command_t);
 
-size_t CountOperands (char *s, const char *delimiter);
-
-int AsmCtorAndRead (char *inputFileName, asm_t *myAsm)
+int AsmRead (asm_t *myAsm, char *inputFileName)
 {
-    DEBUG_LOG ("%s", "AsmCtorAndRead()");
+    DEBUG_LOG ("%s", "AsmRead()");
 
     int status = TextCtor (inputFileName, &(myAsm->text));
 
@@ -51,124 +61,184 @@ int AsmCtorAndRead (char *inputFileName, asm_t *myAsm)
         return 1;
     }
     
-    // TODO: replace \n with \0
-    // TODO: replace ; with \0
-
-    myAsm->instructionsCnt = CountOperands (myAsm->text.buffer, " \n"); // TODO: make constant
+    myAsm->fileName = inputFileName;
+    // myAsm->instructionsCnt = CountOperands (myAsm->text.buffer, " \n"); 
+    myAsm->instructionsCnt = 8; 
+    myAsm->bytecode = (int *) calloc (myAsm->instructionsCnt, sizeof(int));
 
     DEBUG_LOG ("myAsm->instructionsCnt: %lu\n", myAsm->instructionsCnt);
+    
+    StrReplace (myAsm->text.buffer, "\n;", '\0');
 
     return 0;
 }
 
-// FIXME: split on functions  !!!!!!!!!!!!!!!!!
-// FIXME: replace strok_r with sscanf() and onegin functions !!!!!!!!!!!!!!!!
-int Assemble (asm_t *myAsm)
+// TODO: check for this errors:
+// ADD 10
+// PUSH 20 20
+// PUSHR RAX RBX
+// TODO: make functions:  AssembleArgument
+//                        Resize
+int AssembleCommand (asm_t *myAsm, const command_t *command, 
+                     char *lineStart, size_t lineNumber)
 {
-    DEBUG_LOG ("buffer: \"%s\"\n", myAsm->text.buffer);
 
-    size_t bytecodeIdx = 0;
-    myAsm->bytecode = (int *) calloc (myAsm->instructionsCnt, sizeof(int));
-
-    const char *commandDelimiter = "\n";
-    const char *argumentsDelimiter = " ";
-
-    char *commandsSavePtr = NULL;
-
-    // linesArray and sscanf
-    size_t lineNumber = 1;
-    char *line = strtok_r (myAsm->text.buffer, commandDelimiter, &commandsSavePtr);
-    while (line != NULL)
+    if (myAsm->ip + 1 >= myAsm->instructionsCnt)
     {
-        // TODO: ssanf() instead of strtok_r()
+        myAsm->instructionsCnt *= 2;
 
-        DEBUG_LOG ("line: \"%s\";", line);
-        char *operandsSavePtr = NULL;
-
-        char *command = strtok_r (line, argumentsDelimiter, &operandsSavePtr);
-        DEBUG_LOG ("\tcommand: \"%s\"\n", command);
-        
-        bool knownCommand = 0; // for future checks
-        if (command != NULL)
+        int *newBytecode = (int *) realloc (myAsm->bytecode, sizeof(int) * myAsm->instructionsCnt);
+        if (newBytecode == NULL)
         {
-            for (size_t i = 0; i < CommandsNumber; i++)
+            perror ("Error trying to realloc myAsm->bytecode");
+
+            return MY_ASM_COMMON_ERROR |
+                   COMMON_ERROR_REALLOCATING_MEMORY;
+        }
+
+        myAsm->bytecode = newBytecode;
+    }
+
+    myAsm->bytecode[myAsm->ip] = command->bytecode;
+
+    myAsm->ip++;
+
+    int argumentBytecode = -666;
+    
+    if (command->requireArgument)
+    {
+        int readedBytes = 0;
+
+        if (IsRegisterCommand (command->bytecode)) 
+        {
+            char regStr[4] = {};
+            int res = sscanf (lineStart, "%3s %n", regStr, &readedBytes); 
+            lineStart += readedBytes;
+
+            if (res != 1)
             {
-                if (strcmp (commands[i].name, command) == 0)
-                {
-                    knownCommand = 1;
-                    // FIXME: check for buffer overflow
-                    myAsm->bytecode[bytecodeIdx] = commands[i].bytecode;
-                    bytecodeIdx++;
-
-                    char *argument = strtok_r (NULL, argumentsDelimiter, &operandsSavePtr);
-                    DEBUG_LOG ("\t\t require argument: %d", commands[i].requireArgument);
-                    DEBUG_LOG ("\t\t argument: \"%s\"\n", argument);
-
-                    if (commands[i].requireArgument)
-                    {
-                        if (argument == NULL)
-                        {
-                            // TODO: please replace this shit with error codes
-                            ERROR ("Missing argument on line %lu", lineNumber)
-
-                            return ASSEMBLER_MISSING_ARGUMENT; // TODO: error_code
-                        }
-                        // FIXME: check for buffer overflow
-                        // FIXME: check if operand is 
-                        
-                        // FIXME: switch between register encoding and number in push
-                        DEBUG_LOG ("\t\tbytecode[bytecodeIdx - 1] = %d;", myAsm->bytecode[bytecodeIdx - 1]);
-                        if (myAsm->bytecode[bytecodeIdx - 1] == SPU_PUSHR ||
-                            myAsm->bytecode[bytecodeIdx - 1] == SPU_POPR)
-                        {
-                            myAsm->bytecode[bytecodeIdx] = argument[1] - 'A';
-                        }
-                        else
-                        {
-                            DEBUG_LOG ("\t\t %s", "atoi");
-                            myAsm->bytecode[bytecodeIdx] = atoi(argument);
-                        }
-                        // FIXME: peace of shit
-
-                        bytecodeIdx++; 
-
-                        argument = strtok_r (NULL, argumentsDelimiter, &operandsSavePtr);
-                        DEBUG_LOG ("\t\t\t extra argument: \"%s\"\n", argument);
-                        
-                        if (argument != NULL)
-                        {
-                            ERROR ("%sExtra argument on line %lu\n", RED_BOLD_COLOR, lineNumber)
-
-                            return ASSEMBLER_EXTRA_ARGUMENT;
-                        }
-                    }
-                    if (!commands[i].requireArgument && argument != NULL)
-                    {
-                        ERROR ("Unnecessary argument on line %lu", lineNumber) // TODO: add file name
-
-                        return ASSEMBLER_EXTRA_ARGUMENT;
-                    }
-
-                    break;
-                }
+                ERROR_PRINT ("%s:%lu Error reading register name, whish is required for %s command\n",
+                             myAsm->fileName, lineNumber, command->name)
+                
+                return MY_ASM_INVALID_REGISTER_NAME;
             }
-            
-            if (!knownCommand) 
-            {
-                ERROR ("Uknown command on line %lu", lineNumber)
 
-                return ASSEMBLER_UKNOWN_COMMAND;
+            int result = GetRegisterBytecode (regStr, &argumentBytecode);
+            if (result != MY_ASM_OK)
+            {
+                ERROR_PRINT ("%s:%lu Invalid register name. Correct one for exammple is \"RAX\"\n",
+                             myAsm->fileName, lineNumber)
+
+                return result;
+            }
+        }
+        else
+        {
+            int res = sscanf (lineStart, "%d %n", &argumentBytecode, &readedBytes);
+            lineStart += readedBytes;
+
+            if (res != 1)
+            {
+                ERROR_PRINT ("%s:%lu Error reading command argument, whish is required for %s command\n",
+                             myAsm->fileName, lineNumber, command->name)
+
+                return MY_ASM_MISSING_ARGUMENT;
             }
         }
 
-        DEBUG_LOG ("lineNumber = %lu\n", lineNumber);
-        lineNumber++;
-        line = strtok_r (NULL, commandDelimiter, &commandsSavePtr);
-        DEBUG_LOG ("line = \"%s\"\n", line);
+        // FIXME: just go over linesStart checking for not probel
+        char trash = '\0';
+        int res = sscanf (lineStart, "%s %n", &trash, &readedBytes);
+        lineStart += readedBytes;
 
+        if (res == 1)
+        {
+            ERROR_PRINT ("%s:%lu Extra argument after command %s, \'%c\'=%d\n",
+                            myAsm->fileName, lineNumber, command->name, trash, trash)
+
+            return MY_ASM_EXTRA_ARGUMENT;
+        }
+        //
+
+        DEBUG_PRINT ("argument = %d;\n", argumentBytecode);
+        
+        //delete this resize
+        if (myAsm->ip >= myAsm->instructionsCnt)
+        {
+            myAsm->instructionsCnt *= 2;
+
+            int *newBytecode = (int *) realloc (myAsm->bytecode, sizeof(int) * myAsm->instructionsCnt);
+            if (newBytecode == NULL)
+            {
+                perror ("Error trying to realloc myAsm->bytecode");
+
+                return MY_ASM_COMMON_ERROR; // TODO: but I want COMMON_ERROR_REALLOCATING_MEMORY
+            }
+
+            myAsm->bytecode = newBytecode;
+        }
+
+        myAsm->bytecode[myAsm->ip] = argumentBytecode;
+
+        myAsm->ip++;
     }
 
-    return ASSEMBLER_OK;
+    //check for trash symbols
+
+    return MY_ASM_OK;
+}
+
+int Assemble (asm_t *myAsm)
+{
+    myAsm->ip = 0;
+
+    for (size_t i = 0; myAsm->text.lines[i].start != 0; i++)
+    {
+        DEBUG_PRINT ("[%lu].len: %lu\n", i, myAsm->text.lines[i].len);
+        DEBUG_PRINT ("[%lu].start: %p\n", i, myAsm->text.lines[i].start);
+        DEBUG_PRINT ("[%lu] = \"%.*s\"\n", i, (int) myAsm->text.lines[i].len - 1, myAsm->text.lines[i].start);
+
+        char *lineStart = myAsm->text.lines[i].start;
+
+        if (lineStart[0] == '\0') 
+            continue;
+
+        bool knownCommand = false;
+        int readedBytes = 0;
+        char command[MAX_COMMAND_LEN] = {}; // FIXME: constant for command!!!!!!!!!!!
+
+        // FIXME: just use strncmp bro
+        sscanf (lineStart, "%" "s %n", command, &readedBytes);
+        
+        lineStart += readedBytes;
+
+        DEBUG_PRINT ("command = \"%s\", readedBytes = %d;\n", command, readedBytes);
+        
+        // TODO: make this for-loop in another function
+        for (size_t j = 0; j < CommandsNumber; j++)
+        {
+            if (strcmp (commands[j].name, command) == 0)
+            {
+                knownCommand = true;
+
+                int res = AssembleCommand (myAsm, &commands[j], lineStart, i + 1);
+
+                if (res != MY_ASM_OK) return res;
+            }
+
+        }
+
+        if (!knownCommand) 
+        {
+            ERROR_PRINT ("%s:%lu Uknown command \"%s\"", myAsm->fileName, i + 1, command);
+
+            return MY_ASM_UKNOWN_COMMAND;
+        }
+
+        DEBUG_PRINT ("%s", "\n");
+    }
+
+    return MY_ASM_OK;
 }
 
 int PrintBytecode (const char *outputFileName, asm_t *myAsm)
@@ -195,34 +265,49 @@ int PrintBytecode (const char *outputFileName, asm_t *myAsm)
     return 0;
 }
 
-// TODO: is delimiter
-size_t CountOperands (char *s, const char *delimiter)
+bool IsRegisterCommand (int command)
 {
-    bool previousIsText = true;
-    for (size_t i = 0; delimiter[i] != '\0'; i++)
-    {
-        if (s[0] == delimiter[i])
-            previousIsText = false;
-    }
+    const int registerBit = 1 << 5;
 
-    size_t counter = 0;
-    for (size_t i = 0; s[i] != '\0'; i++)
-    {
-        bool isDelimeter = false;
-        for (size_t j = 0; delimiter[j] != '\0'; j++)
-        {
-            if (s[i] == delimiter[j])
-            {
-                isDelimeter = true;
-                if (previousIsText) 
-                    counter++;
-                break;
-            }
-        }
-        previousIsText = !isDelimeter;
-    }
+    return (command & registerBit);
+}
+
+// RAX -> 0
+// RBX -> 1 
+// ..
+// RHX -> 7
+// all other cases will be errors
+int GetRegisterBytecode (char *registerName, int *bytecode)
+{
+    if (registerName[0] != 'R') return MY_ASM_INVALID_REGISTER_NAME;
+    if (registerName[2] != 'X') return MY_ASM_INVALID_REGISTER_NAME;
+
+    int registerIdx = registerName[1] - 'A';
+
+    if (registerIdx < 0)                  return MY_ASM_INVALID_REGISTER_NAME;
+    if ((size_t)registerIdx >= NUMBER_OF_REGISTERS) return MY_ASM_INVALID_REGISTER_NAME;
+
+    *bytecode = registerIdx;
+
+    return MY_ASM_OK;
+}
+
+int AsmPrintError (int error)
+{
+    DEBUG_LOG ("Assembler error = %d\n", error);
+
+    if (error == MY_ASM_OK) return 0;
+
+    fprintf(stderr, "%s", RED_BOLD_COLOR);
+
+    if (error & MY_ASM_UKNOWN_COMMAND)        fprintf(stderr, "%s", "Uknown command in input file\n");
+    if (error & MY_ASM_MISSING_ARGUMENT)      fprintf(stderr, "%s", "Missing argument for command that requires it\n");
+    if (error & MY_ASM_EXTRA_ARGUMENT)        fprintf(stderr, "%s", "Extra argument for command that doesn't requires it\n");
+    if (error & MY_ASM_INVALID_REGISTER_NAME) fprintf(stderr, "%s", "Invalid register name. Correct one for exammple is \"RAX\"\n");
     
-    return counter;
+    fprintf(stderr, "%s", COLOR_END);
+    
+    return 0;
 }
 
 int AsmDtor (asm_t *myAsm)
@@ -235,8 +320,9 @@ int AsmDtor (asm_t *myAsm)
         myAsm->bytecode = NULL;
     }
 
-    
     myAsm->instructionsCnt = 0;
+
+    myAsm->fileName = NULL;
 
     return 0;
 }
