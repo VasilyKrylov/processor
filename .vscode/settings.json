@@ -6,6 +6,7 @@
         "streambuf": "cpp",
         "array": "cpp",
         "string": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "type_traits": "cpp"
     }
 }

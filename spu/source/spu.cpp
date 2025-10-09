@@ -114,7 +114,6 @@ int SpuDtor (spu_t *spu)
         {                                                           \
             spu->ip++;                                              \
             spu->ip++;                                              \
-            status = RE_OK;                                         \
         }                                                           \
     }                                                               \
 }
@@ -128,10 +127,10 @@ int SpuRun (spu_t *spu)
 
     for (; spu->ip < spu->bytecodeCnt ;)
     {
-        // SPU_DUMP (spu, "in switch case")
+        SPU_DUMP (spu, "in switch case")
 
 #ifdef PRINT_DEBUG
-        // getchar();
+        getchar();
 #endif // PRINT_DEBUG
 
         int status = 0;
@@ -160,13 +159,12 @@ int SpuRun (spu_t *spu)
             
             default:
                 ERROR ("Uknown command in bytecode: %d", spu->bytecode[spu->ip])
-                
                 return RE_UKNOWN_BYTECODE;
         }
 
         if (status != RE_OK)
         {
-            RuntimePrintError (status); // maybe do not call this function
+            // RuntimePrintError (status); // maybe do not call this function
             SPU_DUMP (spu, "Error occured...")
             return status;
         }

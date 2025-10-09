@@ -39,7 +39,7 @@ int main (int argc, char **argv)
         return status;
     }
 
-    status = PrintBytecode ("out.spu", &myAsm); // TODO: add outputfile argument
+    status = PrintBytecode ("../spu/out.spu", &myAsm); // TODO: add outputfile argument
     if (status != 0)
     {
         AsmDtor (&myAsm);

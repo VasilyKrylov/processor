@@ -10,6 +10,7 @@
 #include "utils.h"
 
 // TODO: store error code in VarInfo in stack and spu
+// TODO: macro for if error return else nothing
 int main (int argc, char **argv)
 {
     if (argc != 2)

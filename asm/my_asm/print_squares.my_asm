@@ -11,8 +11,8 @@ PUSH 1
 ADD
 POPR RAX
 
-PUSH 10
 PUSHR RAX
-JE 4    ; Jump if RAX < 10
+PUSH 10
+JBE 4    ; Jump if RAX < 10
 
 HLT

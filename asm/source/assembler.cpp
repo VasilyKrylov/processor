@@ -87,7 +87,7 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
     {
         myAsm->instructionsCnt *= 2;
 
-        int *newBytecode = (int *) realloc (myAsm->bytecode, sizeof(int) * myAsm->instructionsCnt);
+        int *newBytecode = (int *) realloc (myAsm->bytecode, sizeof(int) * myAsm->instructionsCnt); // TODO: memset()?
         if (newBytecode == NULL)
         {
             perror ("Error trying to realloc myAsm->bytecode");
@@ -111,7 +111,9 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
 
         if (IsRegisterCommand (command->bytecode)) 
         {
-            char regStr[4] = {};
+            char regStr[8] = {}; // TODO: it should be 4, but i recive
+            // warning: stack protector not protecting function: all local arrays are less than 8 bytes long [-Wstack-protector]
+            
             int res = sscanf (lineStart, "%3s %n", regStr, &readedBytes); 
             lineStart += readedBytes;
 
@@ -252,15 +254,21 @@ int PrintBytecode (const char *outputFileName, asm_t *myAsm)
 
     for (size_t i = 0; i < myAsm->instructionsCnt; i++)
     {
-        DEBUG_LOG ("i = %lu;", i);
-
         int status = fprintf (outputFile, "%d ", myAsm->bytecode[i]);
+        
         if (status < 0)
         {
             fprintf (stderr, "Error while writing output to %s", outputFileName);
+            DEBUG_LOG ("i = %lu;", i);
+            
             return status;
         }
+
+        // if (myAsm->bytecode[i] == SPU_HLT)
+        //     break;
     }
+
+    DEBUG_LOG ("%s", "PrintBytecode() returns 0");
 
     return 0;
 }

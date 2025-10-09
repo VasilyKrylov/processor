@@ -336,7 +336,7 @@ int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 
     if (status & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)
     {
-        ERROR ("%s", "There is not enought elements on stack for JB command")
+        ERROR ("%s", "There is not enought elements on stack for one of JUMP commands") // replace JUMP with JBE JB...
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
