@@ -14,7 +14,8 @@ enum common_errors
     COMMON_ERROR_ALLOCATING_MEMORY   = 1 << 0,
     COMMON_ERROR_REALLOCATING_MEMORY = 1 << 1,
     COMMON_ERROR_OPENING_FILE        = 1 << 2,
-    COMMON_NULL_POINTER              = 1 << 3
+    COMMON_NULL_POINTER              = 1 << 3,
+    COMMON_SSCANF_ERROR              = 1 << 4
 };
 
 #ifdef PRINT_DEBUG
@@ -34,5 +35,7 @@ enum common_errors
     #define ON_DEBUG(...) 
 
 #endif // PRINT_DEBUG
+
+void StackPrintError (int error);
 
 #endif // K_DEBUG_H

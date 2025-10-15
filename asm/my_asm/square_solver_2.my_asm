@@ -1,0 +1,73 @@
+JMP :m; jump to main
+
+:l
+PUSH -1 ; linear equation
+OUT
+HLT
+
+:e
+PUSH 0  ; D < 0 
+OUT
+HLT
+
+:m
+IN
+IN
+IN
+
+POPR RCX
+POPR RBX
+POPR RAX
+
+PUSHR RAX
+PUSH 0
+JE :l ; exit
+
+; calc discriminant
+PUSHR RBX   
+PUSHR RBX
+MUL         ; b^2
+
+PUSH 4      
+PUSHR RAX
+PUSHR RCX
+MUL
+MUL
+SUB         ; b^2 - 4 * a *c
+
+POPR RDX    ; save D
+
+PUSHR RDX
+PUSH 0      ; D < 0
+JB :e        ; exit
+
+PUSH 2      ; 2 roots
+OUT 2
+
+PUSHR RDX
+SQRT
+POPR RDX    ; RDX = SQRT(RDX)
+
+PUSHR RBX
+PUSH -1
+MUL
+PUSHR RDX
+ADD
+PUSHR RAX
+PUSH 2
+MUL
+DIV
+OUT
+
+PUSHR RBX
+PUSH -1
+MUL
+PUSHR RDX
+SUB
+PUSHR RAX
+PUSH 2
+MUL
+DIV
+OUT
+
+HLT

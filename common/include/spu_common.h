@@ -13,13 +13,13 @@ enum commandsBytecode
     SPU_OUT     =  8,
     SPU_IN      =  9,
 //      JUMP family
-    SPU_JMP    =  10,
-    SPU_JB     =  11, // <
-    SPU_JBE    =  12, // <=
-    SPU_JA     =  13, // >
-    SPU_JAE    =  14, // >=
-    SPU_JE     =  15, // ==
-    SPU_JNE    =  16, // !=
+    SPU_JMP    =  64+10,
+    SPU_JB     =  64+11, // <
+    SPU_JBE    =  64+12, // <=
+    SPU_JA     =  64+13, // >
+    SPU_JAE    =  64+14, // >=
+    SPU_JE     =  64+15, // ==
+    SPU_JNE    =  64+16, // !=
 //
     SPU_PUSHR   =  35,
     SPU_POPR    =  42,

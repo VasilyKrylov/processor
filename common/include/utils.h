@@ -17,8 +17,9 @@ void Swap (size_t *a, size_t *b);
 size_t CountChr (char *s, const char element);
 void StrReplace (char *s, const char *oldValues, const char newValue);
 
-#define MAX (x,y) ( (x) > (y) ? (x) : (y) )
-#define MIN (x,y) ( (x) < (y) ? (x) : (y) )
+#define MAX(x,y)  ( (x) > (y) ? (x) : (y) )
+#define MIN(x,y)  ( (x) < (y) ? (x) : (y) )
+#define SIZE(a)   ( sizeof(a) / sizeof(a[0]) )
 
 struct str_t
 {

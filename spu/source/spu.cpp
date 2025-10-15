@@ -236,7 +236,6 @@ void SpuDump (spu_t *spu, const char *comment,
     }
     printf("%s", "\t}\n");
 
-    
     printf("%s", "}\n");
     
     STACK_DUMP (spu->stack, comment)

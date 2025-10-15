@@ -8,6 +8,17 @@
 #include "debug.h"
 #include "file.h"
 
+// TODO: new macro
+/*
+macro for :
+    int status = AsmRead (&myAsm, argv[1]);
+
+    if (status != 0)
+    {
+        ERROR ("%s", "Error in AsmRead()");
+    }
+*/
+
 // TODO: print bytecode size
 // TODO: print version
 int main (int argc, char **argv)
@@ -21,7 +32,8 @@ int main (int argc, char **argv)
 
     asm_t myAsm = {};
 
-    // TODO: CtorAndRead()
+    AsmCtor (&myAsm);
+
     int status = AsmRead (&myAsm, argv[1]);
 
     if (status != 0)
@@ -29,8 +41,9 @@ int main (int argc, char **argv)
         ERROR ("%s", "Error in AsmRead()");
     }
 
-
     status = Assemble (&myAsm);
+    // status |= Assemble (&myAsm);
+
     if (status != 0)
     {
         ERROR ("%s", "Error while assembling")
