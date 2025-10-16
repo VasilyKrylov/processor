@@ -18,6 +18,8 @@ enum common_errors
     COMMON_SSCANF_ERROR              = 1 << 4
 };
 
+// TODO: printCommonError()
+
 #ifdef PRINT_DEBUG
     #define DEBUG_LOG(format, ...)  do { \
                                         fprintf(stderr, BLUE_BOLD_COLOR "[DEBUG] %s:%d:%s(): " format "\n" COLOR_END, \

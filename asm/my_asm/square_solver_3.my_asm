@@ -1,12 +1,12 @@
-JMP :2 ; jump to main
+JMP :2; jump to main
 
 :0
-PUSH -1 ; linear equation
+PUSH -1; linear equation
 OUT
 HLT
 
 :1
-PUSH 0  ; D < 0 
+PUSH 0; D < 0 
 OUT
 HLT
 
@@ -21,7 +21,7 @@ POPR RAX
 
 PUSHR RAX
 PUSH 0
-JE :0 ; exit
+JE :0; exit
 
 ; calc discriminant
 PUSHR RBX   

@@ -17,7 +17,8 @@
 int SpuCtor (spu_t *spu
              ON_DEBUG(, spuVarInfo_t varInfo))
 {
-    int result = STACK_CREATE (&spu->stack, 10)
+    int result = STACK_CREATE (&spu->stack, 8)
+    result    |= STACK_CREATE (&spu->stackReturn, 8)
 
     if (result != STACK_OK) 
         return result; // NOTE: BUT HOW SOME FUNCTION IN MAIN WILL KNOW WHAT IT IS THE STACK ERROR, NOT SPU?
@@ -86,6 +87,7 @@ int SpuDtor (spu_t *spu)
     if (spu == NULL) return COMMON_NULL_POINTER;
 
     StackDtor (&spu->stack);
+    StackDtor (&spu->stackReturn);
 
     free (spu->bytecode);
     spu->bytecode = NULL;
@@ -155,6 +157,8 @@ int SpuRun (spu_t *spu)
             case SPU_JAE:   CONDITION_JMP(spu, CMP_ABOVE_OR_EQUAL); break;
             case SPU_JE:    CONDITION_JMP(spu, CMP_EQUAL);          break;
             case SPU_JNE:   CONDITION_JMP(spu, CMP_NOT_EQUAL);      break;
+            case SPU_CALL:  status = DoCall  (spu);                 break;
+            case SPU_RET:   status = DoRet   (spu);                 break;
             case SPU_HLT:   return RE_OK;
             
             default:

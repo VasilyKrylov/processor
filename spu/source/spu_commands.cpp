@@ -52,7 +52,7 @@ int DoAdd (spu_t *spu)
     DEBUG_LOG ("%s", "ADD");
     if (spu->stack.size < 2) // not here
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in ADD command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in ADD command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -78,7 +78,7 @@ int DoSub (spu_t *spu)
     DEBUG_LOG ("%s", "SUB");
     if (spu->stack.size < 2)
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in SUB command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in SUB command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -102,7 +102,7 @@ int DoDiv (spu_t *spu)
     DEBUG_LOG ("%s", "DIV");
     if (spu->stack.size < 2)
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in DIV command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in DIV command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -116,7 +116,7 @@ int DoDiv (spu_t *spu)
 
     if (a == 0)
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in DIV command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in DIV command, there are less than 2 elements on the stack");
 
         return RE_DIVISION_BY_ZERO;
     }
@@ -135,7 +135,7 @@ int DoMul (spu_t *spu)
     DEBUG_LOG ("%s", "MUL");
     if (spu->stack.size < 2)
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in MUL command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in MUL command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -162,7 +162,7 @@ int DoSqrt (spu_t *spu)
 
     if (spu->stack.size < 1)
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in MUL command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in MUL command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -191,7 +191,7 @@ int DoOut (spu_t *spu)
 {
     if (spu->bytecodeCnt < 1)
     {
-        ERROR_PRINT ("%s", "ERROR_PRINT in OUT command, there is less than 1 element on the stack");
+        ERROR_PRINT ("%s", "ERROR in OUT command, there is less than 1 element on the stack");
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -307,34 +307,34 @@ int DoJmp (spu_t *spu)
         
         return RE_JMP_ARGUMENT_IS_NEGATIVE;
     }
-    
+
     spu->ip = (size_t) spu->bytecode[spu->ip];
     
     return RE_OK;
 }
 
-int DoJb (spu_t *spu)
-{
-    spu->ip++;
+// int DoJb (spu_t *spu)
+// {
+//     spu->ip++;
 
-    if (spu->ip >= spu->bytecodeCnt) 
-    {
-        ERROR_PRINT ("%s", "Missing required argument for JUMP command")
+//     if (spu->ip >= spu->bytecodeCnt) 
+//     {
+//         ERROR_PRINT ("%s", "Missing required argument for JUMP command")
         
-        return RE_MISSING_ARGUMENT;
-    }
+//         return RE_MISSING_ARGUMENT;
+//     }
 
-    stackDataType first = 0;
-    stackDataType second = 0;
-    GetOperands (spu, &first, &second);
+//     stackDataType first = 0;
+//     stackDataType second = 0;
+//     GetOperands (spu, &first, &second);
 
-    if (second < first)
-        spu->ip = (size_t) spu->bytecode[spu->ip];
-    else
-        spu->ip++;
+//     if (second < first)
+//         spu->ip = (size_t) spu->bytecode[spu->ip];
+//     else
+//         spu->ip++;
     
-    return RE_OK;
-}
+//     return RE_OK;
+// }
 
 int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 {
@@ -347,6 +347,59 @@ int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
+
+    return RE_OK;
+}
+
+int DoCall (spu_t *spu)
+{
+    spu->ip++;
+
+    if (spu->ip >= spu->bytecodeCnt) 
+    {
+        ERROR_PRINT ("%s", "Missing required argument for CALL command");
+        
+        return RE_MISSING_ARGUMENT;
+    }
+
+    if (spu->bytecode[spu->ip] < 0)
+    {
+        ERROR_PRINT ("CALL argument is less than zero - %d", spu->bytecode[spu->ip]);
+        
+        return RE_CALL_ARGUMENT_IS_NEGATIVE;
+    }
+
+    int status = StackPush (&spu->stackReturn, (int)spu->ip + 1);
+    if (status != STACK_OK)
+    {
+        StackPrintError (status);
+        return status;
+    } // NOTE: maybe make macro for this ?
+    
+    spu->ip = (size_t) spu->bytecode[spu->ip];
+    
+    return RE_OK;
+}
+
+int DoRet (spu_t *spu)
+{
+    int returnAdress = -1;
+
+    int status = StackPop (&spu->stackReturn, &returnAdress);
+    if (status != STACK_OK)
+    {
+        StackPrintError (status);
+        return status;
+    }
+
+    if (returnAdress < 0)
+    {
+        ERROR_PRINT ("RET: return adress is less than zero - %d", returnAdress);
+        
+        return RE_RET_VALUE_IS_NEGATIVE;
+    }
+
+    spu->ip = (size_t)returnAdress;
 
     return RE_OK;
 }

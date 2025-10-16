@@ -1,0 +1,35 @@
+IN
+POPR RAX
+CALL :0
+
+PUSHR RBX
+OUT
+HLT
+
+; RAX - argument
+; RBX - return value
+:0
+    PUSHR RAX 
+    PUSH 1
+    JBE :1
+
+    PUSHR RAX ; save RAX = n on the stack
+    PUSHR RAX 
+    PUSH 1
+    SUB      
+    POPR RAX ; RAX -= 1
+
+    CALL :0
+
+    POPR RAX ; get argument of our function
+    PUSHR RAX
+    PUSHR RBX
+    MUL
+    POPR RBX ; RBX *= RAX
+
+    RET
+
+:1
+    PUSH 1
+    POPR RBX
+    RET

@@ -51,13 +51,13 @@ void StackPrintError (int error)
 
     if (error & STACK_NULL_STRUCT)                    printf("%s", "Stack struct is null!\n");
     if (error & STACK_NULL_DATA)                      printf("%s", "Stack data is null!\n");
-    if (error & STACK_OVERFLOW)                 printf("%s", "Stack size grater than stack capacity\n");
-    if (error & STACK_BIG_CAPACITY)	                printf("%s", "Stack capacity is too big, sorry bro\n");
+    if (error & STACK_OVERFLOW)                         printf("%s", "Stack size grater than stack capacity\n");
+    if (error & STACK_BIG_CAPACITY)	                    printf("%s", "Stack capacity is too big, sorry bro\n");
     if (error & STACK_STRUCT_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the stack structure has been overwritten\n");
-    if (error & STACK_STRUCT_CANARY_END_OVERWRITE)	printf("%s", "End of the stack structure has been overwritten\n");
-    if (error & STACK_DATA_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the data field has been overwritten\n");
+    if (error & STACK_STRUCT_CANARY_END_OVERWRITE)	    printf("%s", "End of the stack structure has been overwritten\n");
+    if (error & STACK_DATA_CANARY_START_OVERWRITE)	    printf("%s", "Beginning of the data field has been overwritten\n");
     if (error & STACK_DATA_CANARY_END_OVERWRITE)	    printf("%s", "End of the data field has been overwritten\n");
-    if (error & STACK_POISON_VALUE_IN_DATA)	        printf("%s", "There is poison value in stack\n");
+    if (error & STACK_POISON_VALUE_IN_DATA)	            printf("%s", "There is poison value in stack\n");
     if (error & STACK_WRONG_VALUE_IN_POISON)	        printf("%s", "There is NOT poison value in unused section of stack\n");
     if (error & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)	printf("%s", "Stack is empty, but StackPop() called\n");
 

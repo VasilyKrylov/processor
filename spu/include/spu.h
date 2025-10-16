@@ -21,7 +21,9 @@ enum runtimeErrors
     RE_SQRT_NEGATIVE_ARGUMENT          = 1 << 3,
     RE_INVALID_INPUT                   = 1 << 4,
     RE_UKNOWN_BYTECODE                 = 1 << 5,
-    RE_JMP_ARGUMENT_IS_NEGATIVE        = 1 << 6 // TODO: add print for this error code
+    RE_JMP_ARGUMENT_IS_NEGATIVE        = 1 << 6, // TODO: add print for this error code
+    RE_CALL_ARGUMENT_IS_NEGATIVE       = 1 << 7, 
+    RE_RET_VALUE_IS_NEGATIVE           = 1 << 8
 }; // TODO: SpuErrorPrint
 
 #ifdef PRINT_DEBUG
@@ -52,6 +54,7 @@ enum runtimeErrors
 struct spu_t
 {
     stack_t stack;
+    stack_t stackReturn;
 
     int *bytecode;
     size_t bytecodeCnt;
