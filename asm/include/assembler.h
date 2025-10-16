@@ -17,7 +17,9 @@ struct asm_t
     char *fileName = NULL;
     size_t lineNumber = 0; // FIXME: use this in code
 
-    int labels[10] = {};
+    ssize_t labels[10] = {};
+
+    FILE *fileListing = NULL;
 };
 
 enum assemblerErrors

@@ -1,16 +1,16 @@
-JMP :m; jump to main
+JMP :2 ; jump to main
 
-:l
+:0
 PUSH -1 ; linear equation
 OUT
 HLT
 
-:e
+:1
 PUSH 0  ; D < 0 
 OUT
 HLT
 
-:m
+:2
 IN
 IN
 IN
@@ -21,7 +21,7 @@ POPR RAX
 
 PUSHR RAX
 PUSH 0
-JE :l ; exit
+JE :0 ; exit
 
 ; calc discriminant
 PUSHR RBX   
@@ -39,7 +39,7 @@ POPR RDX    ; save D
 
 PUSHR RDX
 PUSH 0      ; D < 0
-JB :e        ; exit
+JB :1        ; exit
 
 PUSH 2      ; 2 roots
 OUT 2

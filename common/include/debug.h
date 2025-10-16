@@ -36,6 +36,4 @@ enum common_errors
 
 #endif // PRINT_DEBUG
 
-void StackPrintError (int error);
-
 #endif // K_DEBUG_H

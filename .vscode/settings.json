@@ -8,6 +8,7 @@
         "string": "cpp",
         "string_view": "cpp",
         "type_traits": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "functional": "cpp"
     }
 }

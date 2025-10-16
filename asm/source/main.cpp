@@ -16,11 +16,14 @@ macro for :
     if (status != 0)
     {
         ERROR ("%s", "Error in AsmRead()");
+
+        return status;
     }
 */
 
 // TODO: print bytecode size
 // TODO: print version
+
 int main (int argc, char **argv)
 {
     if (argc != 2)
@@ -39,10 +42,29 @@ int main (int argc, char **argv)
     if (status != 0)
     {
         ERROR ("%s", "Error in AsmRead()");
+
+        return status;
     }
 
+    // TODO: make argument with argument number of pass
+    // TODO: Macros WRITE_TO_BYTECODE
+    /* 
+    1 проход:
+        не аллоцируем массив байткода, просто считаем myAsm-> ip
+        заполняем массив меток
+    
+    2 проход:
+        аллоцируем массив байткода на посчитанное значение из первого прохода
+        проверяем, что все метки, на которые выполняется прыжок не 0
+    */
+    /*
+    функция токенизации:
+        на вход char *
+
+        на выход массив токенов
+    */
     status = Assemble (&myAsm);
-    // status |= Assemble (&myAsm);
+    status |= Assemble (&myAsm);
 
     if (status != 0)
     {
@@ -61,11 +83,7 @@ int main (int argc, char **argv)
         return status;
     }
 
-    // free (buffer);
-    // free (bytecode);
-    // buffer   = NULL;
-    // bytecode = NULL;
-
     AsmDtor (&myAsm);
+
     return 0;
 }

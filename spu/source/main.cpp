@@ -9,7 +9,7 @@
 #include "stack.h"
 #include "utils.h"
 
-// TODO: store error code in VarInfo in stack and spu
+// TODO: USE VERIFICATOR!!!!!!!!!!
 // TODO: macro for if error return else nothing
 int main (int argc, char **argv)
 {

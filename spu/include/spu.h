@@ -20,7 +20,8 @@ enum runtimeErrors
     RE_DIVISION_BY_ZERO                = 1 << 2,
     RE_SQRT_NEGATIVE_ARGUMENT          = 1 << 3,
     RE_INVALID_INPUT                   = 1 << 4,
-    RE_UKNOWN_BYTECODE                 = 1 << 5
+    RE_UKNOWN_BYTECODE                 = 1 << 5,
+    RE_JMP_ARGUMENT_IS_NEGATIVE        = 1 << 6 // TODO: add print for this error code
 }; // TODO: SpuErrorPrint
 
 #ifdef PRINT_DEBUG

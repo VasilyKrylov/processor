@@ -29,4 +29,7 @@ enum commandsBytecode
 const size_t NUMBER_OF_REGISTERS = 8;
 const size_t MAX_COMMAND_LEN = 8;
 
+const size_t SHIFT_REGISTER = 8;
+const size_t SHIFT_JUMP     = 8;
+
 #endif // K_SPU_COMMON_H

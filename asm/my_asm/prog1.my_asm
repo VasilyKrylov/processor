@@ -1,7 +1,2 @@
-JMP :1; jump to main
-
-:0
-PUSH -1
-
-:1
-IN
+PUSH 10 ;ESDFASFDA FASFKJ ASLFSDALKJ
+PUSH 2

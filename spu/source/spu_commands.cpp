@@ -13,7 +13,7 @@ int DoPush (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR ("%s", "Missing required argument for PUSH command")
+        ERROR_PRINT ("%s", "Missing required argument for PUSH command")
 
         return RE_MISSING_ARGUMENT;
     }
@@ -52,7 +52,7 @@ int DoAdd (spu_t *spu)
     DEBUG_LOG ("%s", "ADD");
     if (spu->stack.size < 2) // not here
     {
-        ERROR ("%s", "Error in ADD command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in ADD command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -78,7 +78,7 @@ int DoSub (spu_t *spu)
     DEBUG_LOG ("%s", "SUB");
     if (spu->stack.size < 2)
     {
-        ERROR ("%s", "Error in SUB command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in SUB command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -102,7 +102,7 @@ int DoDiv (spu_t *spu)
     DEBUG_LOG ("%s", "DIV");
     if (spu->stack.size < 2)
     {
-        ERROR ("%s", "Error in DIV command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in DIV command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -116,7 +116,7 @@ int DoDiv (spu_t *spu)
 
     if (a == 0)
     {
-        ERROR ("%s", "Error in DIV command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in DIV command, there are less than 2 elements on the stack");
 
         return RE_DIVISION_BY_ZERO;
     }
@@ -135,7 +135,7 @@ int DoMul (spu_t *spu)
     DEBUG_LOG ("%s", "MUL");
     if (spu->stack.size < 2)
     {
-        ERROR ("%s", "Error in MUL command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in MUL command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -162,7 +162,7 @@ int DoSqrt (spu_t *spu)
 
     if (spu->stack.size < 1)
     {
-        ERROR ("%s", "Error in MUL command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in MUL command, there are less than 2 elements on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -172,7 +172,7 @@ int DoSqrt (spu_t *spu)
 
     if (a < 0)
     {
-        ERROR ("%s", "Negative argument for SQRT command");
+        ERROR_PRINT ("%s", "Negative argument for SQRT command");
 
         return RE_SQRT_NEGATIVE_ARGUMENT;
     }
@@ -191,7 +191,7 @@ int DoOut (spu_t *spu)
 {
     if (spu->bytecodeCnt < 1)
     {
-        ERROR ("%s", "Error in OUT command, there is less than 1 element on the stack");
+        ERROR_PRINT ("%s", "ERROR_PRINT in OUT command, there is less than 1 element on the stack");
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
@@ -215,7 +215,7 @@ int DoIn (spu_t *spu)
 
     if (status != 1) 
     {
-        ERROR ("%s", "STUPID PEACE OF SHIT, THIS IS NOT INTEGER NUMBER!")
+        ERROR_PRINT ("%s", "STUPID PEACE OF SHIT, THIS IS NOT INTEGER NUMBER!")
         
         return RE_INVALID_INPUT;
     }
@@ -237,7 +237,7 @@ int DoPushr (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR ("%s", "Missing required argument for PUSHR command")
+        ERROR_PRINT ("%s", "Missing required argument for PUSHR command")
 
         return RE_MISSING_ARGUMENT;
     }
@@ -267,7 +267,7 @@ int DoPopr (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR ("%s", "Missing required argument for POPR command")
+        ERROR_PRINT ("%s", "Missing required argument for POPR command")
 
         return RE_MISSING_ARGUMENT;
     }
@@ -296,11 +296,18 @@ int DoJmp (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR ("%s", "Missing required argument for JMP command")
+        ERROR_PRINT ("%s", "Missing required argument for JMP command");
         
         return RE_MISSING_ARGUMENT;
     }
 
+    if (spu->bytecode[spu->ip] < 0)
+    {
+        ERROR_PRINT ("JMP argument is less than zero - %d", spu->bytecode[spu->ip]);
+        
+        return RE_JMP_ARGUMENT_IS_NEGATIVE;
+    }
+    
     spu->ip = (size_t) spu->bytecode[spu->ip];
     
     return RE_OK;
@@ -312,7 +319,7 @@ int DoJb (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR ("%s", "Missing required argument for JUMP command")
+        ERROR_PRINT ("%s", "Missing required argument for JUMP command")
         
         return RE_MISSING_ARGUMENT;
     }
@@ -336,7 +343,7 @@ int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 
     if (status & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)
     {
-        ERROR ("%s", "There is not enought elements on stack for one of JUMP commands") // replace JUMP with JBE JB...
+        ERROR_PRINT ("%s", "There is not enought elements on stack for one of JUMP commands") // replace JUMP with JBE JB...
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }

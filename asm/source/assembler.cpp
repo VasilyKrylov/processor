@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "utils.h"
 
+
 struct command_t 
 {
     const char *name = "";
@@ -18,17 +19,39 @@ struct command_t
     int requireArgument = 0;
 };
 
+// TODO:
+enum token_type
+{
+    LABEL = 0,
+    OPERAND = 1,
+    REGISTER = 2,
+    NEW_LINE = 3,
+
+};
+struct token
+{
+    token_type type;
+    int data;
+
+    size_t lineNumber;
+};
+
 int ResizeBytecode (asm_t *myAsm);
 
-int AssembleCommand (asm_t *myAsm, const command_t *command, 
-                     char **lineStart);
+int AssembleCommand         (asm_t *myAsm, const command_t *command, 
+                             char **lineStart);
+int AssembleRegisterCommand (asm_t *myAsm, const command_t *command, int *argumentBytecode,
+                             char **lineStart);
+int AssembleJumpLabelCommand (asm_t *myAsm, const command_t *command, int *argumentBytecode,
+                              char **lineStart);
 
 int AddLabel (asm_t *myAsm, char **lineStart);
+int GetLabelName (int labelIdx);
+int GetLabelIdx (char c);
+int CheckLabel (asm_t *myAsm, int labelIdx);
                      
-
 bool IsRegisterCommand (int commandBytecode);
 bool IsJumpCommand (int commandBytecode);
-int ConvertLabelName (char c);
 
 int GetRegisterBytecode (char *registerName, int *bytecode);
 
@@ -53,7 +76,7 @@ static const command_t commands[] = {
     {.name = "JE",    .bytecode =  SPU_JE,      .requireArgument = 1},
     {.name = "JNE",   .bytecode =  SPU_JNE,     .requireArgument = 1},
     {.name = "HLT",   .bytecode =  SPU_HLT,     .requireArgument = 0},
-    // TODO: COMMAND (IN, 0)
+    // TODO: macro COMMAND (IN, 0)
 };
 
 static const size_t CommandsNumber = sizeof(commands) / sizeof(command_t);
@@ -74,15 +97,26 @@ int AsmCtor (asm_t *myAsm)
     myAsm->fileName = NULL;
     myAsm->lineNumber = 0;
 
-    for (size_t i = 0; i < SIZE (myAsm->labels); i++)
+    for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
     {
         myAsm->labels[i] = -1;
     }
 
-    return 0;
+    myAsm->fileListing = fopen ("my_asm.listing", "w");
+    
+    if (myAsm->fileListing == NULL)
+    {
+        perror ("Error opening output file for assembler listing");
+
+        return MY_ASM_COMMON_ERROR | 
+               COMMON_ERROR_OPENING_FILE;
+               // TODO: print error for MY_ASM_COMMON_ERROR
+    }
+
+    return MY_ASM_OK;
 }
 
-int AsmRead (asm_t *myAsm, char *inputFileName)
+int AsmRead (asm_t *myAsm, char *inputFileName) // FIXME asserts
 {
     DEBUG_LOG ("%s", "AsmRead()");
 
@@ -96,27 +130,26 @@ int AsmRead (asm_t *myAsm, char *inputFileName)
     }
     
     myAsm->fileName = inputFileName;
-    // myAsm->instructionsCnt = CountOperands (myAsm->text.buffer, " \n"); 
-    myAsm->instructionsCnt = 8; 
+    myAsm->instructionsCnt = 8; // FIXME const
     myAsm->bytecode = (int *) calloc (myAsm->instructionsCnt, sizeof(int));
 
     DEBUG_LOG ("myAsm->instructionsCnt: %lu\n", myAsm->instructionsCnt);
     
     StrReplace (myAsm->text.buffer, "\n;", '\0');
 
-    return 0;
+    return MY_ASM_OK;
 }
 
 int ResizeBytecode (asm_t *myAsm)
 {
-    // check space for current command and potential argument
+    // + 1 beacuse we check space for current command and potential argument
 
     if (myAsm->ip + 1 >= myAsm->instructionsCnt)
     {
         myAsm->instructionsCnt *= 2;
 
         int *newBytecode = (int *) realloc (myAsm->bytecode, sizeof(int) * myAsm->instructionsCnt); // TODO: memset()?
-        
+
         if (newBytecode == NULL)
         {
             perror ("Error trying to realloc myAsm->bytecode");
@@ -126,6 +159,65 @@ int ResizeBytecode (asm_t *myAsm)
         }
 
         myAsm->bytecode = newBytecode;
+    }
+
+    return MY_ASM_OK;
+}
+
+int AssembleJumpLabelCommand (asm_t *myAsm, const command_t *command, int *argumentBytecode,
+                              char **lineStart)
+{
+    DEBUG_LOG ("Jump family command with label argument: %s\n", command->name);
+
+    *lineStart += 1; // skip space, go to argument
+
+    char labelName = *lineStart[0]; // get argument
+    int labelIdx = GetLabelIdx (labelName);
+
+    *lineStart += 1; // skip argument, end of str
+
+    DEBUG_LOG ("*lineStart = \'%c\';", *lineStart[0]);
+    DEBUG_LOG ("labelName = \'%c\';", labelName);
+
+    DEBUG_LOG ("GetLabelIdx(labelName) = %d\n", GetLabelIdx(labelName));
+    DEBUG_LOG ("myAsm->labels[GetLabelIdx(labelName)] = %d;\n", myAsm->labels[GetLabelIdx(labelName)]);
+        
+    int result = CheckLabel (myAsm, labelIdx);
+    if (result != MY_ASM_OK) 
+        return result;
+
+    *argumentBytecode = myAsm->labels[labelIdx];
+
+    return MY_ASM_OK;
+}
+
+int AssembleRegisterCommand (asm_t *myAsm, const command_t *command, int *argumentBytecode,
+                             char **lineStart)
+{
+    DEBUG_LOG ("Register family command: %s\n", command->name);
+
+    char regStr[8] = {}; // TODO: it should be 4, but i recive
+    // warning: stack protector not protecting function: all local arrays are less than 8 bytes long [-Wstack-protector]
+
+    int readedBytes = 0;
+    int result = sscanf (*lineStart, "%3s %n", regStr, &readedBytes); 
+    *lineStart += readedBytes;
+
+    if (result != 1)
+    {
+        ERROR_PRINT ("%s:%lu Error reading register name, whish is required for %s command\n",
+                     myAsm->fileName, myAsm->lineNumber, command->name)
+        
+        return MY_ASM_INVALID_REGISTER_NAME;
+    }
+
+    result = GetRegisterBytecode (regStr, argumentBytecode);
+    if (result != MY_ASM_OK)
+    {
+        ERROR_PRINT ("%s:%lu Invalid register name. Correct one for exammple is \"RAX\"\n",
+                     myAsm->fileName, myAsm->lineNumber)
+
+        return result;
     }
 
     return MY_ASM_OK;
@@ -152,61 +244,32 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
     myAsm->bytecode[myAsm->ip] = command->bytecode;
 
     myAsm->ip++;
-
-    int argumentBytecode = -666;
     
     if (command->requireArgument)
     {
+        // TODO: new fuction - AssembleArgument
+        int argumentBytecode = -666;
+        
         int readedBytes = 0;
 
         if (IsRegisterCommand (command->bytecode)) 
         {
-            // FIXME: new function - assemble register command
-
-            char regStr[8] = {}; // TODO: it should be 4, but i recive
-            // warning: stack protector not protecting function: all local arrays are less than 8 bytes long [-Wstack-protector]
-            
-            result = sscanf (*lineStart, "%3s %n", regStr, &readedBytes); 
-            *lineStart += readedBytes;
-
-            if (result != 1)
-            {
-                ERROR_PRINT ("%s:%lu Error reading register name, whish is required for %s command\n",
-                             myAsm->fileName, myAsm->lineNumber, command->name)
-                
-                return MY_ASM_INVALID_REGISTER_NAME;
-            }
-
-            result = GetRegisterBytecode (regStr, &argumentBytecode);
+            result = AssembleRegisterCommand (myAsm, command, &argumentBytecode, lineStart);
             if (result != MY_ASM_OK)
-            {
-                ERROR_PRINT ("%s:%lu Invalid register name. Correct one for exammple is \"RAX\"\n",
-                             myAsm->fileName, myAsm->lineNumber)
-
                 return result;
-            }
         }
+
+        else if (IsJumpCommand (command->bytecode) && *lineStart[0] == ':')
+        {
+            result = AssembleJumpLabelCommand (myAsm, command, &argumentBytecode, lineStart);
+            if (result != MY_ASM_OK)
+                return result;
+        }
+
         else
         {
-            char labelName = '\0';
-
-            if (IsJumpCommand (command->bytecode) && 
-                *lineStart[0] == ':')
-            {
-                DEBUG_LOG ("Jump family comand: %s\n", command->name);
-
-                (*lineStart)++;
-
-                result = sscanf (*lineStart, "%c %n", &labelName, &readedBytes);
-                *lineStart += readedBytes;
-
-                DEBUG_LOG ("labelName = \'%c\';", labelName);
-            }
-            else
-            {
-                result = sscanf (*lineStart, "%d %n", &argumentBytecode, &readedBytes);
-                *lineStart += readedBytes;
-            }
+            result = sscanf (*lineStart, "%d %n", &argumentBytecode, &readedBytes);
+            *lineStart += readedBytes;
 
             if (result != 1)
             {
@@ -215,36 +278,26 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
 
                 return MY_ASM_MISSING_ARGUMENT;
             }
-
-            if (IsJumpCommand (command->bytecode))
-            {
-                DEBUG_LOG ("%s", "Assign argumentBytecode\n");
-                DEBUG_LOG ("ConvertLabelName(labelName) = %d\n", ConvertLabelName(labelName));
-                DEBUG_LOG ("myAsm->labels[ConvertLabelName(labelName)] = %d;\n", myAsm->labels[ConvertLabelName(labelName)]);
-                
-                argumentBytecode = myAsm->labels[ConvertLabelName (labelName)]; // NOTE: maybe some check?
-            }
         }
 
-        // FIXME: just go over linesStart checking for not probel
-        char trash = '\0';
-        int res = sscanf (*lineStart, "%s %n", &trash, &readedBytes);
-        *lineStart += readedBytes;
-
-        if (res == 1)
-        {
-            ERROR_PRINT ("%s:%lu Trash symbols after command %s, \'%c\'=%d\n",
-                            myAsm->fileName, myAsm->lineNumber, command->name, trash, trash)
-
-            return MY_ASM_TRASH_SYMBOLS;
-        }
-        //
 
         DEBUG_PRINT ("argumentBytecode = %d;\n", argumentBytecode);
 
         myAsm->bytecode[myAsm->ip] = argumentBytecode;
 
         myAsm->ip++;
+    }
+
+    // FIXME: just go over linesStart checking for not probel
+    char trash = '\0';
+    int res = sscanf (*lineStart, "%c", &trash);
+
+    if (res == 1)
+    {
+        ERROR_PRINT ("%s:%lu Trash symbols after command %s, \'%c\'=%d\n",
+                        myAsm->fileName, myAsm->lineNumber, command->name, trash, trash)
+
+        return MY_ASM_TRASH_SYMBOLS;
     }
 
     //check for trash symbols
@@ -257,22 +310,21 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     assert (lineStart);
     assert (*lineStart);
 
-    DEBUG_LOG ("*lineStart = '%c';", **lineStart);
-    DEBUG_LOG ("*(lineStart+1) = '%c';", *(*lineStart + 1));
+    DEBUG_LOG ("*lineStart = '%c', %d;", **lineStart, **lineStart);
+    DEBUG_LOG ("*(lineStart+1) = '%c', %d;", *(*lineStart + 1), *(*lineStart + 1));
+    DEBUG_LOG ("*(lineStart+2) = '%c', %d;", *(*lineStart + 2), *(*lineStart + 2));
 
-    (*lineStart)++; // go to the argument
+    *lineStart += 1; // go to the argument
     char labelName = *lineStart[0];
-    int labelIdx = ConvertLabelName(labelName);
+    *lineStart += 1; // end of the string
 
-    if (labelIdx < 0 || (size_t)labelIdx > SIZE (myAsm->labels)) 
-    {
-        ERROR_PRINT ("%s:%lu Bad label name, only [0-9] allowed, but you typed %c",
-                     myAsm->fileName, myAsm->lineNumber, labelName);
+    int labelIdx = GetLabelIdx(labelName);
 
-        return MY_ASM_BAD_LABEL_NAME;
-    }
+    int result = CheckLabel (myAsm, labelIdx);
+    if (result != MY_ASM_OK) 
+        return result;
 
-    if (myAsm->labels[labelIdx] != LABEL_DEFAULT_VALUE)
+    if (myAsm->labels[labelIdx] != (ssize_t)myAsm->ip)
     {
         ERROR_PRINT ("%s:%lu Double assigning label with name %c", 
                      myAsm->fileName, myAsm->lineNumber, labelIdx + '0');
@@ -287,12 +339,24 @@ int AddLabel (asm_t *myAsm, char **lineStart)
 
     DEBUG_PRINT ("myAsm->labels[%d] = %d;\n", labelIdx, myAsm->labels[labelIdx]);
     
-    myAsm->labels[labelIdx] = (int)myAsm->ip;
+    myAsm->labels[labelIdx] = (ssize_t)myAsm->ip;
 
+    // while (*lineStart[0] != '\0')
+    // {
+    //     char c = *lineStart[0];
+
+    //     if (c != ' ')
+    //     {
+    //         ERROR_PRINT ("%s:%lu Trash symbol %c after label %d", 
+    //                     myAsm->fileName, myAsm->lineNumber, c, labelIdx);
+
+    //         return MY_ASM_TRASH_SYMBOLS;
+    //     }
+
+    //     *lineStart += 1;
+    // }
     char trash = '\0';
-
     int res = sscanf (*lineStart, "%c", &trash);
-
     if (res == 1) 
     {
         ERROR_PRINT ("%s:%lu Trash symbol %c after label %d", 
@@ -318,6 +382,7 @@ int Assemble (asm_t *myAsm)
 
         char *lineStart = myAsm->text.lines[i].start;
 
+        // TODO: new function token processing
         if (lineStart[0] == '\0') 
             continue;
         
@@ -335,8 +400,8 @@ int Assemble (asm_t *myAsm)
         int readedBytes = 0;
         char command[MAX_COMMAND_LEN] = {}; // FIXME: constant for command!!!!!!!!!!!
 
-        // FIXME: just use strncmp bro
-        sscanf (lineStart, "%" "s %n", command, &readedBytes);
+        // FIXME: just use strncmp bro and make function to skip spaces (strip)
+        sscanf (lineStart, "%s %n", command, &readedBytes);
         
         lineStart += readedBytes;
 
@@ -353,7 +418,6 @@ int Assemble (asm_t *myAsm)
 
                 if (res != MY_ASM_OK) return res;
             }
-
         }
 
         if (!knownCommand) 
@@ -396,7 +460,7 @@ int PrintBytecode (const char *outputFileName, asm_t *myAsm)
 
     DEBUG_LOG ("%s", "PrintBytecode() returns 0");
 
-    return 0;
+    return MY_ASM_OK;
 }
 
 bool IsRegisterCommand (int commandBytecode)
@@ -407,14 +471,32 @@ bool IsRegisterCommand (int commandBytecode)
 }
 bool IsJumpCommand (int commandBytecode)
 {
-    const int registerBit = 1 << 6;
+    const int registerBit = 1 << 6; //FIXME: CONSTANT
 
     return (commandBytecode & registerBit);
 }
 
-int ConvertLabelName (char c)
+int GetLabelIdx (char labelName)
 {
-    return c - '0';
+    return labelName - '0';
+}
+
+int GetLabelName (int labelIdx)
+{
+    return labelIdx + '0';
+}
+
+int CheckLabel (asm_t *myAsm, int labelIdx)
+{
+    if (labelIdx < 0 || (size_t)labelIdx > ARRAY_SIZE (myAsm->labels)) 
+    {
+        ERROR_PRINT ("%s:%lu Bad label name, only [0-9] allowed, but you typed %c",
+                     myAsm->fileName, myAsm->lineNumber, GetLabelName(labelIdx));
+
+        return MY_ASM_BAD_LABEL_NAME;
+    }
+
+    return MY_ASM_OK;
 }
 
 // RAX -> 0
@@ -453,7 +535,7 @@ int AsmPrintError (int error)
 
     fprintf(stderr, "%s", COLOR_END);
     
-    return 0;
+    return MY_ASM_OK;
 }
 
 int AsmDtor (asm_t *myAsm)
@@ -471,5 +553,12 @@ int AsmDtor (asm_t *myAsm)
     myAsm->fileName   = NULL;
     myAsm->lineNumber = 0;
 
-    return 0;
+    for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
+    {
+        myAsm->labels[i] = 0;
+    }
+
+    fclose (myAsm->fileListing);
+
+    return MY_ASM_OK;
 }

@@ -15,7 +15,7 @@
 #include <math.h>
 
 int SpuCtor (spu_t *spu
-            ON_DEBUG(, spuVarInfo_t varInfo))
+             ON_DEBUG(, spuVarInfo_t varInfo))
 {
     int result = STACK_CREATE (&spu->stack, 10)
 
@@ -165,7 +165,8 @@ int SpuRun (spu_t *spu)
         if (status != RE_OK)
         {
             // RuntimePrintError (status); // maybe do not call this function
-            SPU_DUMP (spu, "Error occured...")
+            SPU_DUMP (spu, RED_BOLD_COLOR "Error occured..." COLOR_END);
+
             return status;
         }
     }

@@ -19,7 +19,8 @@ void StrReplace (char *s, const char *oldValues, const char newValue);
 
 #define MAX(x,y)  ( (x) > (y) ? (x) : (y) )
 #define MIN(x,y)  ( (x) < (y) ? (x) : (y) )
-#define SIZE(a)   ( sizeof(a) / sizeof(a[0]) )
+
+#define ARRAY_SIZE(a)   ( sizeof(a) / sizeof(a[0]) )
 
 struct str_t
 {
