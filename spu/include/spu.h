@@ -8,8 +8,11 @@ enum spuErrors
 {
     SPU_OK                  = 0,
     SPU_NULL_STRUCT         = 1 << 0,
-    SPU_BYTECODE_NULL       = 1 << 0,
-    SPU_BYTECODE_OVERFLOW   = 1 << 1
+    SPU_BYTECODE_NULL       = 1 << 1,
+    SPU_BYTECODE_OVERFLOW   = 1 << 2,
+    SPU_WRONG_VERSION       = 1 << 3,
+
+    SPU_COMMON_ERROR        = 1 << 31
 };
 
 enum runtimeErrors

@@ -192,11 +192,11 @@ int TextCtor (char *inputFileName, text_t *text)
 {
     text->buffer = ReadFile (inputFileName, &text->bufferLen);
     
-    if (text->buffer == NULL) return COMMON_NULL_POINTER; 
+    if (text->buffer == NULL) return COMMON_ERROR_NULL_POINTER; 
 
     text->lines = MakePointers (text->buffer, '\n');
 
-    if (text->lines == NULL) return COMMON_NULL_POINTER;
+    if (text->lines == NULL) return COMMON_ERROR_NULL_POINTER;
 
     return COMMON_OK;
 }

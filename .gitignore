@@ -6,3 +6,7 @@ spu/spu
 
 asm/tmp*
 spu/tmp*
+
+tmp* 
+.out
+.vscode/

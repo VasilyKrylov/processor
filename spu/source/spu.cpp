@@ -14,6 +14,9 @@
 
 #include <math.h>
 
+int SpuReadHeader (spu_t *spu, char **buffer);
+int SpuReadBytecode (spu_t *spu, char **buffer);
+
 int SpuCtor (spu_t *spu
              ON_DEBUG(, spuVarInfo_t varInfo))
 {
@@ -34,6 +37,7 @@ int SpuCtor (spu_t *spu
     return SPU_OK;
 }
 
+// FIMXE: returning 0 and 1, should be enums
 int SpuRead (spu_t *spu, char *inputFileName)
 {
     size_t bufferLen = 0;
@@ -41,50 +45,119 @@ int SpuRead (spu_t *spu, char *inputFileName)
 
     if (buffer == NULL)
     {
-        return COMMON_NULL_POINTER;
+        return COMMON_ERROR_NULL_POINTER;
+    }
+    int status = SpuReadHeader(spu, &buffer);
+    if (status != 0) 
+    {
+        free(buffer); // NOTE: this is local function, so I shouldn't do buffer=NULL, ok?
+
+        return status;
     }
 
-    spu->bytecodeCnt = CountChr (buffer, ' '); // TODO: header file with size and version
+    status = SpuReadBytecode(spu, &buffer);
+    if (status != 0) 
+    {
+        free(buffer);
+
+        return status;
+    }
+
+    return SPU_OK;
+}
+
+int SpuReadHeader (spu_t *spu, char **buffer)
+{
+    size_t version = 133722869;
+    int bufferOffset = 0;
+
+    int status = sscanf (*buffer, "%lu %n", &version, &bufferOffset);
+    *buffer += bufferOffset;
+
+    if (status == EOF) // TODO: make new function
+    {
+        ERROR_PRINT ("%s", "There is no version value in file...");
+
+        return COMMON_ERROR_TO_EARLY_EOF;
+    }
+    if (status == 0)
+    {
+        ERROR_PRINT ("%s", "Error reading version from file...");
+
+        return COMMON_ERROR_SSCANF;
+    }
+
+    if (version != MY_ASM_VERSION)
+    {
+        ERROR_PRINT ("Wrong version of binary. Required version is \"%lu\", but got \"%lu\"", 
+                     MY_ASM_VERSION, version);
+
+        return SPU_WRONG_VERSION;
+    }
+
+    status = sscanf (*buffer, "%lu %n", &spu->bytecodeCnt, &bufferOffset);
+    *buffer += bufferOffset;
+
+    if (status == EOF)
+    {
+        ERROR ("%s", "There is no version value in file...")
+
+        return COMMON_ERROR_TO_EARLY_EOF;
+    }
+    if (status == 0)
+    {
+        ERROR ("%s", "Error reading version from file...")
+
+        return COMMON_ERROR_SSCANF;
+    }
+
+    return SPU_OK;
+}
+
+int SpuReadBytecode (spu_t *spu, char **buffer)
+{
     spu->bytecode = (int *) calloc (spu->bytecodeCnt, sizeof(int));
+    if (spu->bytecode == NULL)
+    {
+        ERROR_PRINT ("%s", "Error allocating memory for bytecode");
+
+        return SPU_COMMON_ERROR |
+               COMMON_ERROR_ALLOCATING_MEMORY;
+    }
     // FIXME: check for calloc
     
     DEBUG_LOG ("spu->bytecodeCnt = %lu", spu->bytecodeCnt);
 
-    char *bufferPtr = buffer;
+    char *bufferPtr = *buffer;
     for (size_t i = 0; i < spu->bytecodeCnt; i++)
     {
         int bufferOffset = 0;
-        int res = sscanf (bufferPtr, "%d %n", &spu->bytecode[i], &bufferOffset);
+        int status = sscanf (bufferPtr, "%d %n", &spu->bytecode[i], &bufferOffset);
         bufferPtr += bufferOffset;
 
-        if (res == EOF)
+        if (status == EOF)
         {
-            ERROR ("There is %lu bytecodes in the file \"%s\"", i, inputFileName)
-            ERROR ("Excepted %lu bytecodes from this file", spu->bytecodeCnt) // TODO: replace bytecodes with opcodes
-            
-            free (buffer);
+            ERROR ("There is %lu bytecodes in the input file ", i) // TODO: add file name in this error message
+            ERROR ("Excepted %lu bytecodes from this file", spu->bytecodeCnt) 
 
-            return 1;
+            return 1; // FIXME:
         }
-        if (res == 0)
+        if (status == 0)
         {
-            ERROR ("Error reading bytecode from file \"%s\". Bytecode with index [%lu] was incorrect", inputFileName, i + 1)
+            ERROR ("Error reading bytecode from file \"%s\"."
+                   "Bytecode with index [%lu] was incorrect", "FILE NAME HERE", i + 1)
             
-            free (buffer);
             
             return 1; // TODO: one time it will be enum's...
         }
     }
-    
-    free (buffer);
-    buffer = NULL;
 
     return RE_OK;
 }
 
 int SpuDtor (spu_t *spu)
 {
-    if (spu == NULL) return COMMON_NULL_POINTER;
+    if (spu == NULL) return COMMON_ERROR_NULL_POINTER;
 
     StackDtor (&spu->stack);
     StackDtor (&spu->stackReturn);
@@ -122,7 +195,7 @@ int SpuDtor (spu_t *spu)
 
 int SpuRun (spu_t *spu)
 {
-    if (spu == NULL) return COMMON_NULL_POINTER;
+    if (spu == NULL) return COMMON_ERROR_NULL_POINTER;
 
     DEBUG_LOG ("%s", "HELLO FRIENDS, TODAY WE WILL RUN SOFT PROCESSOR UNIT");
     DEBUG_LOG ("%s", "LET'S GOOOOOOOOOOOOOOOOOOOOOOOOOO");
@@ -145,7 +218,7 @@ int SpuRun (spu_t *spu)
             case SPU_SUB:   status = DoSub   (spu);                 break;
             case SPU_DIV:   status = DoDiv   (spu);                 break;
             case SPU_MUL:   status = DoMul   (spu);                 break;
-            case SUP_SQRT:  status = DoSqrt  (spu);                 break;
+            case SPU_SQRT:  status = DoSqrt  (spu);                 break;
             case SPU_OUT:   status = DoOut   (spu);                 break;
             case SPU_IN:    status = DoIn    (spu);                 break;
             case SPU_PUSHR: status = DoPushr (spu);                 break;

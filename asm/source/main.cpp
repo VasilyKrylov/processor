@@ -30,15 +30,14 @@ int main (int argc, char **argv)
     {
         printf ("Run program like this: %s file.my_asm\n", argv[0]);
 
-        return 0;
+        return 7;
     }
 
     asm_t myAsm = {};
 
-    AsmCtor (&myAsm);
+    AsmCtor (&myAsm /*, inputBuffer*/);
 
     int status = AsmRead (&myAsm, argv[1]);
-
     if (status != 0)
     {
         ERROR ("%s", "Error in AsmRead()");
@@ -63,9 +62,7 @@ int main (int argc, char **argv)
 
         на выход массив токенов
     */
-    status = Assemble (&myAsm);
-    status |= Assemble (&myAsm);
-
+    status  = Assemble (&myAsm, 1);
     if (status != 0)
     {
         ERROR ("%s", "Error while assembling")
@@ -74,7 +71,16 @@ int main (int argc, char **argv)
         return status;
     }
 
-    status = PrintBytecode ("../spu/out.spu", &myAsm); // TODO: add outputfile argument
+    status  = Assemble (&myAsm, 2);
+    if (status != 0)
+    {
+        ERROR ("%s", "Error while assembling")
+        AsmDtor (&myAsm);
+        
+        return status;
+    }
+
+    status = PrintBinary ("../spu/out.spu", &myAsm); // TODO: add outputfile argument
     if (status != 0)
     {
         AsmDtor (&myAsm);

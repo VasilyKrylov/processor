@@ -13,7 +13,7 @@ int DoPush (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR_PRINT ("%s", "Missing required argument for PUSH command")
+        ERROR_PRINT ("%s", "Missing required argument for PUSH command");
 
         return RE_MISSING_ARGUMENT;
     }
@@ -215,7 +215,7 @@ int DoIn (spu_t *spu)
 
     if (status != 1) 
     {
-        ERROR_PRINT ("%s", "STUPID PEACE OF SHIT, THIS IS NOT INTEGER NUMBER!")
+        ERROR_PRINT ("%s", "STUPID PEACE OF SHIT, THIS IS NOT INTEGER NUMBER!");
         
         return RE_INVALID_INPUT;
     }
@@ -237,7 +237,7 @@ int DoPushr (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR_PRINT ("%s", "Missing required argument for PUSHR command")
+        ERROR_PRINT ("%s", "Missing required argument for PUSHR command");
 
         return RE_MISSING_ARGUMENT;
     }
@@ -267,7 +267,7 @@ int DoPopr (spu_t *spu)
 
     if (spu->ip >= spu->bytecodeCnt) 
     {
-        ERROR_PRINT ("%s", "Missing required argument for POPR command")
+        ERROR_PRINT ("%s", "Missing required argument for POPR command");
 
         return RE_MISSING_ARGUMENT;
     }
@@ -343,7 +343,7 @@ int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 
     if (status & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)
     {
-        ERROR_PRINT ("%s", "There is not enought elements on stack for one of JUMP commands") // replace JUMP with JBE JB...
+        ERROR_PRINT ("%s", "There is not enought elements on stack for one of JUMP commands"); // replace JUMP with JBE JB...
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
