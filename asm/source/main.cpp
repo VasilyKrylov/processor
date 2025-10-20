@@ -46,8 +46,6 @@ int main (int argc, char **argv)
         return status;
     }
 
-    // TODO: make argument with argument number of pass
-    // TODO: Macros WRITE_TO_BYTECODE
     /* 
     1 проход:
         не аллоцируем массив байткода, просто считаем myAsm-> ip
@@ -57,16 +55,10 @@ int main (int argc, char **argv)
         аллоцируем массив байткода на посчитанное значение из первого прохода
         проверяем, что все метки, на которые выполняется прыжок не 0
     */
-    /*
-    функция токенизации:
-        на вход char *
-
-        на выход массив токенов
-    */
     status  = Assemble (&myAsm, 1);
     if (status != 0)
     {
-        ERROR ("%s", "Error while assembling")
+        ERROR ("%s", "Error while first assembling")
         AsmDtor (&myAsm);
         
         return status;
@@ -75,7 +67,7 @@ int main (int argc, char **argv)
     status  = Assemble (&myAsm, 2);
     if (status != 0)
     {
-        ERROR ("%s", "Error while assembling")
+        ERROR ("%s", "Error while second(final) assembling")
         AsmDtor (&myAsm);
         
         return status;

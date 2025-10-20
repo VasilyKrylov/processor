@@ -23,12 +23,17 @@ enum commandsBytecode
 //
     SPU_CALL    =  17,
     SPU_RET     =  18,
+
+    SPU_PUSHM   =  19,
+    SPU_POPM    =  20,
+
     SPU_PUSHR   =  35,
     SPU_POPR    =  42,
     SPU_HLT     = -1,
 }; 
 
 const size_t NUMBER_OF_REGISTERS = 8;
+const size_t REGISTER_NAME_LEN = 3;
 const size_t SHIFT_REGISTER = 5;
 
 const size_t MY_ASM_VERSION = 1337+1;

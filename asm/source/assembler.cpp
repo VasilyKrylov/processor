@@ -30,6 +30,7 @@ bool IsRegisterCommand          (int commandBytecode);
 bool IsJumpCommand              (int commandBytecode);
 
 int GetRegisterBytecode         (char *registerName, int *readedBytes, int *bytecode);
+int GetRegisterAddressBytecode  (char *registerName, int *readedBytes, int *bytecode);
 
 int PrintHeader                 (FILE *outputFile, asm_t *myAsm);
 int PrintBytecode               (FILE *outputFile, asm_t *myAsm);
@@ -135,6 +136,7 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
     int labelIdx = -1337;
 
     int readedBytes = 0;
+
     int status = sscanf (*lineStart, ":%d %n", &labelIdx, &readedBytes);
     *lineStart += readedBytes;
     if (status == 1)
@@ -143,7 +145,7 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
 
         int result = CheckLabel (myAsm, labelIdx);
         argument->value =(int) myAsm->labels[labelIdx];
-        // TODO:
+        // TODO: i do not remember, but for now this works
         if (result != MY_ASM_OK)
             return result;
 
@@ -164,6 +166,15 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
     if (status == MY_ASM_OK)
     {
         argument->type = MY_ASM_ARG_REGISTER;
+
+        return MY_ASM_OK;
+    }
+
+    status = GetRegisterAddressBytecode (*lineStart, &readedBytes, &argument->value);
+    *lineStart += readedBytes;
+    if (status == MY_ASM_OK)
+    {
+        argument->type = MY_ASM_ARG_REGISTER_ADDRESS;
 
         return MY_ASM_OK;
     }
@@ -325,7 +336,6 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
         return status;
     }
     
-    // TODO: new function stringProcessing
     const command_t *command = FindCommand (&lineStart);
     if (command == NULL) 
     {
@@ -335,12 +345,11 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     }
     DEBUG_LOG ("command bytecode = %d;", command->bytecode);
 
-    // end of function
-
     if (pass == 1)
     {
         myAsm->ip += 1;
-        myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY);
+        myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY); 
+        // maybe not the best solution, but it works
         
         return MY_ASM_OK;
     }
@@ -417,6 +426,8 @@ int PrintBinary (const char *outputFileName, asm_t *myAsm)
         ERROR_PRINT ("Error while writing output to %s", outputFileName);
     }
 
+    DEBUG_LOG("%s", "PrintBinary() is OK");
+    
     return MY_ASM_OK;
 }
 
@@ -440,11 +451,11 @@ int PrintBytecode (FILE *outputFile, asm_t *myAsm)
     {
         int status = fprintf (outputFile, "%d ", myAsm->bytecode[i]);
         
-        DEBUG_LOG("i = %lu;", i);
 
         if (status < 0)   
             return COMMON_ERROR_WRITE_TO_FILE;
     }
+
 
     return MY_ASM_OK;
 }
@@ -455,14 +466,22 @@ int PrintListingLine (asm_t *myAsm, size_t instructionStart)
     if (status < 0)
         return COMMON_ERROR_WRITE_TO_FILE;
 
+    size_t spaceAlign = 4 + 1 + 4 + 1;
     for (size_t i = instructionStart; i < myAsm->ip; i++)
     {
-        status = fprintf (myAsm->fileListing, "%02d ", myAsm->bytecode[i]);
+        status = fprintf (myAsm->fileListing, "%4d ", myAsm->bytecode[i]);
         if (status < 0)
             return COMMON_ERROR_WRITE_TO_FILE;
+        spaceAlign -= (size_t) status;
     }
 
-    // maybe better to pass here command_t and argument_t
+    DEBUG_LOG ("spaceAlign = %lu;", spaceAlign);
+
+    status = PrintSymbols (myAsm->fileListing, spaceAlign, ' ');
+    if (status != MY_ASM_OK)
+        return status;
+    
+    // NOTE: maybe better to pass here command_t and argument_t
     // but I do not think converting from int to register name, label and other types is worth it
     status = fprintf (myAsm->fileListing, "\t %s\n", 
                           myAsm->text.lines[myAsm->lineNumber - 1].start);
@@ -503,14 +522,29 @@ int CheckLabel (asm_t *myAsm, int labelIdx)
     return MY_ASM_OK;
 }
 
-// RAX -> 0
-// RBX -> 1 
-// ..
-// RHX -> 7
-// all other cases will be errors
+// Yes, you can't do [ RAX ], only [RAX]
+int GetRegisterAddressBytecode (char *registerName, int *readedBytes, int *bytecode)
+{
+    assert (registerName);
+    assert (readedBytes);
+    assert (bytecode);
+
+    if (strlen(registerName) < REGISTER_NAME_LEN + 2) return MY_ASM_INVALID_REGISTER_NAME;
+    
+    if (registerName[0] != '[') return MY_ASM_INVALID_REGISTER_NAME;
+    if (registerName[4] != ']') return MY_ASM_INVALID_REGISTER_NAME;
+
+    int status = GetRegisterBytecode (registerName + 1, readedBytes, bytecode);
+    if (status != MY_ASM_OK)
+        return status;
+
+    readedBytes += 2;
+
+    return MY_ASM_OK;
+}
 int GetRegisterBytecode (char *registerName, int *readedBytes, int *bytecode)
 {
-    if (strlen(registerName) < 3) return MY_ASM_INVALID_REGISTER_NAME;
+    if (strlen(registerName) < REGISTER_NAME_LEN) return MY_ASM_INVALID_REGISTER_NAME;
 
     if (registerName[0] != 'R') return MY_ASM_INVALID_REGISTER_NAME;
     if (registerName[2] != 'X') return MY_ASM_INVALID_REGISTER_NAME;
@@ -521,7 +555,7 @@ int GetRegisterBytecode (char *registerName, int *readedBytes, int *bytecode)
     if ((size_t)registerIdx >= NUMBER_OF_REGISTERS) return MY_ASM_INVALID_REGISTER_NAME;
 
     *bytecode = registerIdx;
-    *readedBytes = 3;
+    *readedBytes = REGISTER_NAME_LEN;
 
     return MY_ASM_OK;
 }

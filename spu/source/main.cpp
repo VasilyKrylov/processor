@@ -11,6 +11,8 @@
 
 // TODO: USE VERIFICATOR!!!!!!!!!!
 // TODO: macro for if error return else nothing
+// TODO: массив указателей
+// TODO: генерация spu_commands.cpp
 int main (int argc, char **argv)
 {
     if (argc != 2)

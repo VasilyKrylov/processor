@@ -14,10 +14,11 @@
  */
 void Swap (size_t *a, size_t *b);
 
-size_t CountChr (char *s, const char element);
-void StrReplace (char *s, const char *oldValues, const char newValue);
-size_t GetWordLen (char *s, const char *delimiters);
-char *SkipSpaces (char *s);
+size_t CountChr     (char *s, const char element);
+void StrReplace     (char *s, const char *oldValues, const char newValue);
+size_t GetWordLen   (char *s, const char *delimiters);
+char *SkipSpaces    (char *s);
+int PrintSymbols    (FILE *outputFile, size_t cnt, char c);
 
 #define MAX(x,y)  ( (x) > (y) ? (x) : (y) )
 #define MIN(x,y)  ( (x) < (y) ? (x) : (y) )

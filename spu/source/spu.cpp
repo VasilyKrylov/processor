@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "spu.h"
 
@@ -12,7 +13,6 @@
 #include "file.h"
 #include "utils.h"
 
-#include <math.h>
 
 int SpuReadHeader (spu_t *spu, char **buffer);
 int SpuReadBytecode (spu_t *spu, char **buffer);
@@ -228,14 +228,16 @@ int SpuRun (spu_t *spu)
             case SPU_PUSHR: status = DoPushr (spu);                 break;
             case SPU_POPR:  status = DoPopr  (spu);                 break;
             case SPU_JMP:   status = DoJmp   (spu);                 break;
+            case SPU_CALL:  status = DoCall  (spu);                 break;
+            case SPU_RET:   status = DoRet   (spu);                 break;
+            case SPU_PUSHM: status = DoPushm (spu);                 break;
+            case SPU_POPM:  status = DoPopm  (spu);                 break;
             case SPU_JB:    CONDITION_JMP(spu, CMP_BELOW);          break;
             case SPU_JBE:   CONDITION_JMP(spu, CMP_BELOW_OR_EQUAL); break;
             case SPU_JA:    CONDITION_JMP(spu, CMP_ABOVE);          break;
             case SPU_JAE:   CONDITION_JMP(spu, CMP_ABOVE_OR_EQUAL); break;
             case SPU_JE:    CONDITION_JMP(spu, CMP_EQUAL);          break;
             case SPU_JNE:   CONDITION_JMP(spu, CMP_NOT_EQUAL);      break;
-            case SPU_CALL:  status = DoCall  (spu);                 break;
-            case SPU_RET:   status = DoRet   (spu);                 break;
             case SPU_HLT:   return RE_OK;
             
             default:

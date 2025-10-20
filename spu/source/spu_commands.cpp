@@ -18,12 +18,14 @@ int DoPush (spu_t *spu)
         return RE_MISSING_ARGUMENT;
     }
 
-
     DEBUG_LOG ("\tPushed %d on stack", spu->bytecode[spu->ip]);
+
     int status = StackPush (&spu->stack, spu->bytecode[spu->ip]);
     if (status != STACK_OK)
     {
-        DEBUG_LOG ("\tstatus = %d", status);
+        StackPrintError (status);
+
+        return status;
     }
 
     spu->ip += 1;
@@ -250,8 +252,10 @@ int DoPushr (spu_t *spu)
     DEBUG_LOG ("\tPushed %d on stack", regVal);
     int status = StackPush (&spu->stack, regVal);
     if (status != STACK_OK) 
-    {
-        DEBUG_LOG ("\tstatus = %d", status);
+    {        
+        StackPrintError (status);
+
+        return status;
     }
 
     spu->ip += 1;
@@ -276,12 +280,14 @@ int DoPopr (spu_t *spu)
     stackDataType stackValue = 0;
 
     int status = StackPop (&spu->stack, &stackValue);
-    spu->regs[regIdx] = stackValue;
-
     if (status != STACK_OK)
     {
-        DEBUG_LOG ("\tstack status = %d; // looks like not good program loaded to spu...", status);
+        StackPrintError (status);
+
+        return status;
     }
+
+    spu->regs[regIdx] = stackValue;
 
     DEBUG_LOG ("R%cX = %d;\n", char('A' + regIdx), spu->regs[regIdx]); // TODO: make function to get register name by its index
 
@@ -373,6 +379,7 @@ int DoCall (spu_t *spu)
     if (status != STACK_OK)
     {
         StackPrintError (status);
+
         return status;
     } // NOTE: maybe make macro for this ?
     
@@ -389,6 +396,7 @@ int DoRet (spu_t *spu)
     if (status != STACK_OK)
     {
         StackPrintError (status);
+
         return status;
     }
 
@@ -400,6 +408,74 @@ int DoRet (spu_t *spu)
     }
 
     spu->ip = (size_t)returnAdress;
+
+    return RE_OK;
+}
+
+int DoPushm (spu_t *spu)
+{
+    DEBUG_LOG ("%s", "PUSHM");
+
+    spu->ip += 1;
+
+    if (spu->ip >= spu->bytecodeCnt) 
+    {
+        ERROR_PRINT ("%s", "Missing required argument for PUSHM command");
+
+        return RE_MISSING_ARGUMENT;
+    }
+
+    int regIdx = spu->bytecode[spu->ip];
+    int regVal = spu->regs[regIdx];
+    int ramVal = spu->ram[regVal];
+
+    DEBUG_LOG ("\tRAM[%d] = %d;\n", regVal, ramVal);
+    DEBUG_LOG ("\tPushed %d on stack", ramVal);
+    
+    int status = StackPush (&spu->stack, ramVal);
+    if (status != STACK_OK) 
+    {
+        StackPrintError (status);
+
+        return status;
+    }
+
+    spu->ip += 1;
+
+    return RE_OK;
+}
+
+int DoPopm (spu_t *spu)
+{
+    DEBUG_LOG ("%s", "POPM");
+
+    spu->ip += 1;
+
+    if (spu->ip >= spu->bytecodeCnt) 
+    {
+        ERROR_PRINT ("%s", "Missing required argument for POPM command");
+
+        return RE_MISSING_ARGUMENT;
+    }
+
+    int regIdx = spu->bytecode[spu->ip];
+    int regVal = spu->regs[regIdx];
+    
+    stackDataType stackValue = 0;
+
+    int status = StackPop (&spu->stack, &stackValue);
+    if (status != STACK_OK)
+    {
+        StackPrintError (status);
+
+        return status;
+    }
+
+    spu->ram[regVal] = stackValue;
+
+    DEBUG_LOG ("\tRAM[%d] = %d;\n", regVal, stackValue);
+
+    spu->ip += 1;
 
     return RE_OK;
 }

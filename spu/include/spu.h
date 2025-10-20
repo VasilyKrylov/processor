@@ -64,6 +64,9 @@ struct spu_t
     
     size_t ip; 
     int regs[NUMBER_OF_REGISTERS] = {0}; // RAX, RBX, RCX, RDX
+
+    int ram[100] = {0};
+
 #ifdef PRINT_DEBUG
     spuVarInfo_t varInfo = {};
 #endif // PRINT_DEBUG

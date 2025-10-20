@@ -67,3 +67,18 @@ char *SkipSpaces (char *s)
 
     return s; 
 }
+
+int PrintSymbols (FILE *outputFile, size_t cnt, char c)
+{
+    // NOTE: I know better to print 4 or 8 symbols at once, but I have no time for this know
+    // I believe in compiler optimisations
+
+    for (size_t i = 0; i < cnt; i++)
+    {
+        int status = fprintf (outputFile, "%c", c);
+        if (status < 0)
+            return COMMON_ERROR_WRITE_TO_FILE;
+    }
+
+    return COMMON_OK;
+}
