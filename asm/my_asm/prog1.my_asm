@@ -1,3 +1,10 @@
+JMP :2
+
+PUSH -1
+OUT
+HLT
+
+:2
 PUSH 10 
 PUSH 2
 CALL :0

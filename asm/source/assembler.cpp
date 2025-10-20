@@ -14,9 +14,11 @@
 int ResizeBytecode              (asm_t *myAsm);
 
 const command_t *FindCommand    (char **lineStart);
+
+int AssembleLine                (asm_t *myAsm, size_t strIdx, size_t pass);
 int AssembleCommand             (asm_t *myAsm, const command_t *command, 
                                  char **lineStart);
-int AssembleArgument            (asm_t *myAsm, argument_t *argument,
+int FindArgument                (asm_t *myAsm, argument_t *argument,
                                  char **lineStart);
 
 int AddLabel                    (asm_t *myAsm, char **lineStart);
@@ -27,12 +29,12 @@ int CheckLabel                  (asm_t *myAsm, int labelIdx);
 bool IsRegisterCommand          (int commandBytecode);
 bool IsJumpCommand              (int commandBytecode);
 
-int GetRegisterBytecode         (char *registerName, int *bytecode);
+int GetRegisterBytecode         (char *registerName, int *readedBytes, int *bytecode);
 
 int PrintHeader                 (FILE *outputFile, asm_t *myAsm);
 int PrintBytecode               (FILE *outputFile, asm_t *myAsm);
 
-// TODO: change argType to int
+int PrintListingLine            (asm_t *myAsm, size_t instructionStart);
 
 int AsmCtor (asm_t *myAsm)
 {
@@ -57,7 +59,7 @@ int AsmCtor (asm_t *myAsm)
         myAsm->labels[i] = -1;
     }
 
-    myAsm->fileListing = fopen ("my_asm.listing", "w");
+    myAsm->fileListing = fopen ("listing.txt", "w");
     if (myAsm->fileListing == NULL)
     {
         perror ("Error opening output file for assembler listing");
@@ -123,27 +125,33 @@ int ResizeBytecode (asm_t *myAsm)
     return MY_ASM_OK;
 }
 
-int AssembleArgument (asm_t *myAsm, argument_t *argument,
-                      char **lineStart)
+int FindArgument (asm_t *myAsm, argument_t *argument,
+                  char **lineStart)
 {
     assert(myAsm);
     assert(lineStart);
     assert(*lineStart);
 
+    int labelIdx = -1337;
+
     int readedBytes = 0;
-    int status = sscanf (*lineStart, ":%d %n", &argument->value, &readedBytes);
+    int status = sscanf (*lineStart, ":%d %n", &labelIdx, &readedBytes);
+    *lineStart += readedBytes;
     if (status == 1)
     {
         argument->type = MY_ASM_ARG_LABEL;
 
-        int result = CheckLabel (myAsm, argument->value);
+        int result = CheckLabel (myAsm, labelIdx);
+        argument->value =(int) myAsm->labels[labelIdx];
+        // TODO:
         if (result != MY_ASM_OK)
             return result;
 
         return MY_ASM_OK;
     }
 
-    status = sscanf (*lineStart, "%d", &argument->value);
+    status = sscanf (*lineStart, "%d %n", &argument->value, &readedBytes);
+    *lineStart += readedBytes;
     if (status == 1)
     {
         argument->type = MY_ASM_ARG_NUMBER;
@@ -151,13 +159,17 @@ int AssembleArgument (asm_t *myAsm, argument_t *argument,
         return MY_ASM_OK;
     }
 
-    status = GetRegisterBytecode (*lineStart, &argument->value);
+    status = GetRegisterBytecode (*lineStart, &readedBytes, &argument->value);
+    *lineStart += readedBytes;
     if (status == MY_ASM_OK)
     {
         argument->type = MY_ASM_ARG_REGISTER;
 
         return MY_ASM_OK;
     }
+
+    argument->type = MY_ASM_ARG_EMPTY;
+    argument->value = ARGUMENT_DEFAULT_VALUE;
 
     return MY_ASM_MISSING_ARGUMENT;
 }
@@ -167,7 +179,7 @@ int AssembleArgument (asm_t *myAsm, argument_t *argument,
 // PUSH 20 20
 // PUSHR RAX RBX
 //                        Resize
-int AssembleCommand (asm_t *myAsm, const command_t *command, 
+int AssembleCommand (asm_t *myAsm, const command_t *command,
                      char **lineStart)
 {
     assert(myAsm);
@@ -189,14 +201,13 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
     }
 
     argument_t argument = {};
-    status = AssembleArgument (myAsm, &argument, lineStart);
-
-    if (status != MY_ASM_OK)
+    status = FindArgument (myAsm, &argument, lineStart);
+    if (status != MY_ASM_OK) 
     {
-        ERROR_PRINT ("%s:%lu Error assembling %s argument", 
+        ERROR_PRINT ("%s:%lu Missing argument for command \"%s\"", 
                         myAsm->fileName, myAsm->lineNumber, command->name);
 
-        return MY_ASM_MISSING_ARGUMENT;
+        return status;
     }
 
     if (!(argument.type & command->argType))
@@ -207,8 +218,8 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
         return MY_ASM_WRONG_ARGUMENT_TYPE;
     }
 
-    DEBUG_PRINT ("argument.type = %d;\n", argument.type);
-    DEBUG_PRINT ("argument.value = %d;\n", argument.value);
+    DEBUG_LOG ("argument.type = %d;\n", argument.type);
+    DEBUG_LOG ("argument.value = %d;\n", argument.value);
 
     myAsm->bytecode[myAsm->ip] = argument.value;
 
@@ -265,13 +276,13 @@ int AddLabel (asm_t *myAsm, char **lineStart)
 
 const command_t *FindCommand (char **lineStart)
 {
-    size_t wordLen = GetWordLen (*lineStart, ' ');
+    size_t wordLen = GetWordLen (*lineStart, " ");
     
     DEBUG_LOG ("wordLen = %lu;", wordLen);
 
     for (size_t i = 0; i < CommandsNumber; i++)
     {
-        // FIXME: skip if len doesn't match
+        if (wordLen != commands[i].nameLen - 1) continue;
 
         if (strncmp (*lineStart, commands[i].name, wordLen) == 0)
         {
@@ -284,13 +295,78 @@ const command_t *FindCommand (char **lineStart)
     return NULL;
 }
 
+int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
+{
+    DEBUG_PRINT ("%s", "\n\n");
+
+    DEBUG_PRINT ("[%lu].len: %lu\n", 
+                 strIdx, myAsm->text.lines[strIdx].len);
+    DEBUG_PRINT ("[%lu].start: %p\n", 
+                 strIdx, myAsm->text.lines[strIdx].start);
+    DEBUG_PRINT ("[%lu] = \"%.*s\"\n",  
+                 strIdx, (int) myAsm->text.lines[strIdx].len - 1, myAsm->text.lines[strIdx].start);
+
+    DEBUG_LOG ("myAsm->ip = %lu;", myAsm->ip);
+    
+    myAsm->lineNumber = strIdx + 1;
+
+    char *lineStart = myAsm->text.lines[strIdx].start;
+          lineStart = SkipSpaces (lineStart);
+
+    // TODO: new function token processing
+    if (lineStart[0] == '\0') 
+        return MY_ASM_OK; // MY_ASM_EMPTY_LINE ?
+    
+    // TODO: new function TryFindLabel() (like FindCommand())
+    if (lineStart[0] == ':')
+    {
+        int status = AddLabel (myAsm, &lineStart);
+
+        return status;
+    }
+    
+    // TODO: new function stringProcessing
+    const command_t *command = FindCommand (&lineStart);
+    if (command == NULL) 
+    {
+        ERROR_PRINT ("%s:%lu Uknown command \"%s\"", myAsm->fileName, myAsm->lineNumber, lineStart);
+
+        return MY_ASM_UKNOWN_COMMAND;
+    }
+    DEBUG_LOG ("command bytecode = %d;", command->bytecode);
+
+    // end of function
+
+    if (pass == 1)
+    {
+        myAsm->ip += 1;
+        myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY);
+        
+        return MY_ASM_OK;
+    }
+    
+    const size_t instructionStart = myAsm->ip;
+
+    int status = AssembleCommand (myAsm, command, &lineStart);
+    if (status != MY_ASM_OK) 
+        return status;
+    
+    status = PrintListingLine (myAsm, instructionStart);
+    if (status != MY_ASM_OK)
+        return status;
+
+    // FIXME: CheckTrash();
+
+    return MY_ASM_OK;
+}
+
 int Assemble (asm_t *myAsm, size_t pass)
 {
     assert (myAsm);
 
     DEBUG_PRINT ("%s", "\n");
     DEBUG_PRINT ("%s", "==========================================================\n");
-    DEBUG_PRINT ("\t\t ASSEMBLE - %lu PASS!\n", pass);
+    DEBUG_PRINT (      "                   ASSEMBLE - %lu PASS!\n                 \n", pass);
     DEBUG_PRINT ("%s", "==========================================================\n");
     DEBUG_PRINT ("%s", "\n");
 
@@ -308,59 +384,9 @@ int Assemble (asm_t *myAsm, size_t pass)
 
     for (size_t i = 0; myAsm->text.lines[i].start != 0; i++)
     {
-        DEBUG_PRINT ("%s", "\n\n");
-
-        // TODO: new function
-
-        myAsm->lineNumber = i + 1;
-        
-        DEBUG_PRINT ("[%lu].len: %lu\n", i, myAsm->text.lines[i].len);
-        DEBUG_PRINT ("[%lu].start: %p\n", i, myAsm->text.lines[i].start);
-        DEBUG_PRINT ("[%lu] = \"%.*s\"\n", i, (int) myAsm->text.lines[i].len - 1, myAsm->text.lines[i].start);
-        DEBUG_LOG ("myAsm->ip = %lu;",   myAsm->ip);
-
-        char *lineStart = myAsm->text.lines[i].start;
-
-        // TODO:  add strip()
-
-        // TODO: new function token processing
-        if (lineStart[0] == '\0') 
-            continue;
-        
-        // TODO: new function TryFindLabel() (like FindCommand())
-        if (lineStart[0] == ':')
-        {
-            int status = AddLabel (myAsm, &lineStart);
-
-            if (status == MY_ASM_OK)
-                continue;
-            else
-                return status;
-        }
-        
-        const command_t *command = FindCommand (&lineStart);
-        if (command == NULL) 
-        {
-            // FIMXME: command
-            ERROR_PRINT ("%s:%lu Uknown command \"%s\"", myAsm->fileName, myAsm->lineNumber, lineStart);
-
-            return MY_ASM_UKNOWN_COMMAND;
-        }
-        DEBUG_LOG ("command bytecode = %d;", command->bytecode);
-
-        if (pass == 1)
-        {
-            myAsm->ip += 1;
-            myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY);
-        }
-        else if (pass == 2)
-        {
-            int res = AssembleCommand (myAsm, command, &lineStart);
-            if (res != MY_ASM_OK) 
-                return res;
-        }
-
-        // FIXME: CheckTrash();
+        int status = AssembleLine (myAsm, i, pass);
+        if (status != MY_ASM_OK)
+            return status;
     }
 
     if (pass == 1)
@@ -422,6 +448,30 @@ int PrintBytecode (FILE *outputFile, asm_t *myAsm)
 
     return MY_ASM_OK;
 }
+int PrintListingLine (asm_t *myAsm, size_t instructionStart)
+{
+    // TODO: add labels definitios to listring file
+    int status = fprintf (myAsm->fileListing, "%04lu \t ", instructionStart);
+    if (status < 0)
+        return COMMON_ERROR_WRITE_TO_FILE;
+
+    for (size_t i = instructionStart; i < myAsm->ip; i++)
+    {
+        status = fprintf (myAsm->fileListing, "%02d ", myAsm->bytecode[i]);
+        if (status < 0)
+            return COMMON_ERROR_WRITE_TO_FILE;
+    }
+
+    // maybe better to pass here command_t and argument_t
+    // but I do not think converting from int to register name, label and other types is worth it
+    status = fprintf (myAsm->fileListing, "\t %s\n", 
+                          myAsm->text.lines[myAsm->lineNumber - 1].start);
+    if (status < 0)
+        return COMMON_ERROR_WRITE_TO_FILE;
+
+    return MY_ASM_OK;
+}
+
 
 bool IsRegisterCommand (int commandBytecode)
 {
@@ -458,7 +508,7 @@ int CheckLabel (asm_t *myAsm, int labelIdx)
 // ..
 // RHX -> 7
 // all other cases will be errors
-int GetRegisterBytecode (char *registerName, int *bytecode)
+int GetRegisterBytecode (char *registerName, int *readedBytes, int *bytecode)
 {
     if (strlen(registerName) < 3) return MY_ASM_INVALID_REGISTER_NAME;
 
@@ -471,6 +521,7 @@ int GetRegisterBytecode (char *registerName, int *bytecode)
     if ((size_t)registerIdx >= NUMBER_OF_REGISTERS) return MY_ASM_INVALID_REGISTER_NAME;
 
     *bytecode = registerIdx;
+    *readedBytes = 3;
 
     return MY_ASM_OK;
 }

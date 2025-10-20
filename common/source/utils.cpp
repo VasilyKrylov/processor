@@ -54,19 +54,16 @@ void StrReplace (char *s, const char *oldValues, const char newValue)
     }
 }
 
-size_t GetWordLen (char *s, const char delimiter)
+size_t GetWordLen (char *s, const char *delimiters)
 {
-    assert(s);
+    assert(s); // NOTE: maybe make delimiters global variable(?)
 
-    // FIXME: strchr, str(c)spn
+    return strcspn (s, delimiters);
+}
 
-    size_t wordSize = 0;
-    
-    for (; s[wordSize] != '\0'; wordSize++)
-    {
-        if (s[wordSize] == delimiter)
-            break;
-    }
+char *SkipSpaces (char *s)
+{
+    s += strspn (s, " ");
 
-    return wordSize;
+    return s; 
 }

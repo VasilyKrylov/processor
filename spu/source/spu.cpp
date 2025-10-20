@@ -41,27 +41,32 @@ int SpuCtor (spu_t *spu
 int SpuRead (spu_t *spu, char *inputFileName)
 {
     size_t bufferLen = 0;
-    char *buffer = ReadFile (inputFileName, &bufferLen);
+    char *const buffer = ReadFile (inputFileName, &bufferLen); // NOTE: is *const good?
 
     if (buffer == NULL)
     {
         return COMMON_ERROR_NULL_POINTER;
     }
-    int status = SpuReadHeader(spu, &buffer);
+
+    char *bufferPtr = buffer;
+
+    int status = SpuReadHeader (spu, &bufferPtr);
     if (status != 0) 
     {
-        free(buffer); // NOTE: this is local function, so I shouldn't do buffer=NULL, ok?
+        free (buffer); // NOTE: this is local function, so I shouldn't do buffer=NULL, ok?
+        
+        return status;
+    }
+
+    status = SpuReadBytecode(spu, &bufferPtr);
+    if (status != 0) 
+    {
+        free (buffer);
 
         return status;
     }
 
-    status = SpuReadBytecode(spu, &buffer);
-    if (status != 0) 
-    {
-        free(buffer);
-
-        return status;
-    }
+    free (buffer);
 
     return SPU_OK;
 }
@@ -124,7 +129,6 @@ int SpuReadBytecode (spu_t *spu, char **buffer)
         return SPU_COMMON_ERROR |
                COMMON_ERROR_ALLOCATING_MEMORY;
     }
-    // FIXME: check for calloc
     
     DEBUG_LOG ("spu->bytecodeCnt = %lu", spu->bytecodeCnt);
 

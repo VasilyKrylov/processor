@@ -31,6 +31,6 @@ enum commandsBytecode
 const size_t NUMBER_OF_REGISTERS = 8;
 const size_t SHIFT_REGISTER = 5;
 
-const size_t MY_ASM_VERSION = 1337;
+const size_t MY_ASM_VERSION = 1337+1;
 
 #endif // K_SPU_COMMON_H

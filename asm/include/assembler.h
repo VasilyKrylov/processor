@@ -56,7 +56,10 @@ enum argumentType
     MY_ASM_ARG_UKNOWN   = 1 << 3
 };
 
-#define SPU_COMMAND(commandName, argumentEnum) {.name = #commandName,  .bytecode =  SPU_##commandName,    .argType = argumentEnum, .nameLen = sizeof(#commandName)}
+#define SPU_COMMAND(commandName, argumentEnum) {.name = #commandName,           \
+                                                .bytecode =  SPU_##commandName, \
+                                                .argType = argumentEnum,        \
+                                                .nameLen = sizeof(#commandName)}
 const command_t commands[] = 
 {
     SPU_COMMAND (PUSH,  MY_ASM_ARG_NUMBER   ),

@@ -49,8 +49,8 @@ void StackPrintError (int error)
 
     printf("%s", RED_BOLD_COLOR);
 
-    if (error & STACK_NULL_STRUCT)                    printf("%s", "Stack struct is null!\n");
-    if (error & STACK_NULL_DATA)                      printf("%s", "Stack data is null!\n");
+    if (error & STACK_NULL_STRUCT)                      printf("%s", "Stack struct is null!\n");
+    if (error & STACK_NULL_DATA)                        printf("%s", "Stack data is null!\n");
     if (error & STACK_OVERFLOW)                         printf("%s", "Stack size grater than stack capacity\n");
     if (error & STACK_BIG_CAPACITY)	                    printf("%s", "Stack capacity is too big, sorry bro\n");
     if (error & STACK_STRUCT_CANARY_START_OVERWRITE)	printf("%s", "Beginning of the stack structure has been overwritten\n");

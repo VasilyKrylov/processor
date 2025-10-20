@@ -22,7 +22,8 @@ macro for :
 */
 
 // TODO: print bytecode size
-// TODO: print version
+// TODO: код генерация функций сравнения
+// TODO: код генерация свитч кейса
 
 int main (int argc, char **argv)
 {
