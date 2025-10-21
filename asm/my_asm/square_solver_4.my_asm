@@ -1,0 +1,160 @@
+IN
+IN
+IN
+
+POPR RCX
+POPR RBX
+POPR RAX
+
+PUSHR RAX
+PUSH 0
+JE :0; exit
+
+; calc discriminant
+PUSHR RBX   
+PUSHR RBX
+MUL         ; b^2
+
+PUSH 4      
+PUSHR RAX
+PUSHR RCX
+MUL
+MUL
+SUB         ; b^2 - 4 * a *c
+
+POPR RDX    ; save D
+
+PUSHR RDX
+PUSH 0      ; D < 0
+JB :4       ; exit
+
+PUSHR RDX
+PUSH 0      ; D == 0
+JE :5       ; one root
+
+
+PUSH 13
+OUT 13
+
+PUSHR RDX
+SQRT
+POPR RDX    ; RDX = SQRT(RDX)
+
+CALL :9
+POPR REX
+
+PUSHR RDX
+PUSH -1
+MUL
+POPR RDX
+
+CALL :9
+POPR RFX
+
+PUSHR RFX
+PUSHR REX
+JE :6
+
+PUSH 2
+OUT
+PUSHR RFX
+OUT
+PUSHR REX
+OUT
+
+HLT
+
+:6
+PUSH 1 
+OUT
+PUSHR RFX
+OUT
+HLT
+
+:0 ; linear equation, a = 0
+    PUSHR RBX
+    PUSH 0
+    JE :1           ; if b == 0
+
+    PUSHR RCX
+    PUSH 0
+    JE :3           ; if c == 0
+
+    PUSHR RCX
+    PUSH -1
+    MUL
+    PUSHR RBX
+    DIV
+    OUT
+HLT
+    
+    PUSHR RBX
+    PUSH -1 
+    MUL         ; -b
+    PUSHR RAX
+    PUSH 2
+    MUL
+    DIV         ; / (2 * a)
+
+    OUT
+RET
+
+:1              ; a = b = 0
+    PUSHR RCX
+    PUSH 0
+    JE :2
+
+    PUSH 0      ; c != 0
+    OUT
+
+HLT
+
+:2              ; a = b = c = 0
+    PUSH 8
+    OUT
+
+HLT
+
+:3      ; one root, x1 = 0
+    PUSH 1
+    OUT
+    PUSH 0
+    OUT
+HLT
+
+:4
+    PUSH 0; D < 0 
+    OUT
+HLT
+
+:5  ; one root, D = 0
+    PUSHR RBX
+    PUSH 0
+    JE :3
+
+    PUSH 1
+    OUT
+
+    PUSHR RBX
+    PUSH -1
+    MUL
+    PUSH 2
+    PUSHR RAX
+    MUL
+    DIV
+    OUT
+HLT
+    
+JE :5
+
+:9      ; print root. user cares about +-D to get different answers
+    PUSHR RBX
+    PUSH -1
+    MUL
+    PUSHR RDX
+    ADD
+    PUSHR RAX
+    PUSH 2
+    MUL
+    DIV
+RET

@@ -32,7 +32,6 @@ int main (int argc, char **argv)
 
         return result;
     }
-    // TODO: SpuVerify()
 
     result = SpuRun (&spu);
     if (result != 0)

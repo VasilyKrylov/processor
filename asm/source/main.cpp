@@ -21,7 +21,6 @@ macro for :
     }
 */
 
-// TODO: print bytecode size
 // TODO: код генерация функций сравнения
 // TODO: код генерация свитч кейса
 
