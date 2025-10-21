@@ -13,8 +13,7 @@
 #include "file.h"
 #include "utils.h"
 
-
-int SpuReadHeader (spu_t *spu, char **buffer);
+int SpuReadHeader   (spu_t *spu, char **buffer);
 int SpuReadBytecode (spu_t *spu, char **buffer);
 
 int SpuCtor (spu_t *spu
@@ -232,6 +231,7 @@ int SpuRun (spu_t *spu)
             case SPU_RET:   status = DoRet   (spu);                 break;
             case SPU_PUSHM: status = DoPushm (spu);                 break;
             case SPU_POPM:  status = DoPopm  (spu);                 break;
+            case SPU_DRAW:  status = DoDraw  (spu);                 break;
             case SPU_JB:    CONDITION_JMP(spu, CMP_BELOW);          break;
             case SPU_JBE:   CONDITION_JMP(spu, CMP_BELOW_OR_EQUAL); break;
             case SPU_JA:    CONDITION_JMP(spu, CMP_ABOVE);          break;
@@ -296,6 +296,7 @@ void SpuDump (spu_t *spu, const char *comment,
     printf("\tip          \t = %lu;\n", spu->ip);
     printf("\tbytecodeCnt \t = %lu;\n", spu->bytecodeCnt);
     
+    // REGISTERS
     printf("\tregs[%lu]   \t = [%p]\n", sizeof (spu->regs) / sizeof (spu->regs[0]), spu->regs);
     printf("%s", "\t{\n");
     for (size_t i = 0; i < sizeof (spu->regs) / sizeof (spu->regs[0]); i++)
@@ -305,20 +306,37 @@ void SpuDump (spu_t *spu, const char *comment,
     printf("%s", "\t}\n");
     
     printf("\tbytecode[%lu]   \t = [%p]\n", spu->bytecodeCnt, spu->bytecode);
-    printf("%s", "\t{\n");
+    printf("%s", "\t{");
+    printf ("%s", "\n\t\t        ");
+    for (size_t i = 0; i < SPU_DUMP_BYTECODE_ROW_LEN; i++)
+        printf ("[%04lu] | ", i);
+
     for (size_t i = 0; i < spu->bytecodeCnt; i++)
     {
-        printf ("%s", "\t\t");
+        if (i % SPU_DUMP_BYTECODE_ROW_LEN == 0) 
+        {
+            printf ("\n\t\t[%04lu]: ", i);
+        }
 
         if (i == spu->ip)
-            printf ("%s", "->");
-        else 
-            printf ("%s", "  ");
-        
-        printf("[%lu] = %d\n", i, spu->bytecode[i]); 
-        // TODO: hex dump 
+            printf ("%s<%04d>%s | ", GREEN_BOLD_COLOR, spu->bytecode[i], COLOR_END); 
+        else
+            printf ("%s %04d %s | ", YELLOW_COLOR, spu->bytecode[i], COLOR_END); 
     }
-    printf("%s", "\t}\n");
+
+    // printf("\n\tram[%lu]   \t = [%p]\n", SPU_MAX_RAM_SIZE, spu->ram);
+    // printf("%s", "\t{");
+    // for (size_t i = 0; i < SPU_VIDEO_HEIGHT; i++)
+    // {
+    //     printf ("\n\t\t[%04lu]: ", i);
+
+    //     for (size_t j = 0; j < SPU_VIDEO_WIDTH; j++)
+    //     {            
+    //         printf ("%s %04d %s|", BLUE_COLOR, spu->ram[i], COLOR_END); 
+    //     }
+        
+    // }
+    // printf("%s", "\n\t}\n");
 
     printf("%s", "}\n");
     

@@ -479,3 +479,20 @@ int DoPopm (spu_t *spu)
 
     return RE_OK;
 }
+
+int DoDraw (spu_t *spu)
+{
+    for (size_t i = 0; i < SPU_MAX_RAM_SIZE; i++)
+    {
+        if (i % SPU_VIDEO_WIDTH == 0) 
+            printf ("\n");
+    
+        printf ("%c", spu->ram[i]);
+    }
+
+    printf ("\n");
+
+    spu->ip++;
+
+    return SPU_OK;
+}

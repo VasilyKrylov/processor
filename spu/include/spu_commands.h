@@ -29,5 +29,6 @@ int DoCall  (spu_t *spu);
 int DoRet   (spu_t *spu);
 int DoPushm (spu_t *spu);
 int DoPopm  (spu_t *spu);
+int DoDraw  (spu_t *spu);
 
 #endif // K_SPU_COMMANDS

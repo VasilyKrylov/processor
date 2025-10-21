@@ -4,6 +4,11 @@
 #include "stack.h"
 #include "spu_common.h"
 
+const size_t SPU_DUMP_BYTECODE_ROW_LEN = 8;
+const size_t SPU_VIDEO_WIDTH           = 50;
+const size_t SPU_VIDEO_HEIGHT          = 20;
+const size_t SPU_MAX_RAM_SIZE          = SPU_VIDEO_WIDTH * SPU_VIDEO_HEIGHT;
+
 enum spuErrors 
 {
     SPU_OK                  = 0,
@@ -65,7 +70,7 @@ struct spu_t
     size_t ip; 
     int regs[NUMBER_OF_REGISTERS] = {0}; // RAX, RBX, RCX, RDX
 
-    int ram[100] = {0};
+    int ram[SPU_MAX_RAM_SIZE] = {0};
 
 #ifdef PRINT_DEBUG
     spuVarInfo_t varInfo = {};
@@ -79,15 +84,15 @@ struct spu_t
 #endif //PRINT_DEBUG
 
 
-int SpuCtor (spu_t *spu
-            ON_DEBUG(, spuVarInfo_t varInfo));
-int SpuRead (spu_t *spu, char *inputFileName);
-int SpuDtor (spu_t *spu);
-int SpuRun (spu_t *spu);
-int SpuVerify (spu_t *spu);
-void RuntimePrintError (int error);
-void SpuDump (spu_t *spu, const char *comment,
-              const char *file, int line, const char * func);
-int SpuError (spu_t *spu);
+int SpuCtor             (spu_t *spu
+                         ON_DEBUG(, spuVarInfo_t varInfo));
+int SpuRead             (spu_t *spu, char *inputFileName);
+int SpuDtor             (spu_t *spu);
+int SpuRun              (spu_t *spu);
+int SpuVerify           (spu_t *spu);
+void RuntimePrintError  (int error);
+void SpuDump            (spu_t *spu, const char *comment,
+                         const char *file, int line, const char * func);
+int SpuError            (spu_t *spu);
 
 #endif // K_SPU_H
