@@ -34,7 +34,7 @@ enum assemblerErrors
     MY_ASM_INVALID_REGISTER_NAME             = 1 << 4,
     MY_ASM_INVALID_REGISTER_ADDRESS_NAME     = 1 << 4,
     MY_ASM_LABEL_DOUBLE_ASSIGNMENT           = 1 << 5,
-    MY_ASM_BAD_LABEL_NAME                    = 1 << 6,
+    MY_ASM_BAD_LABEL                         = 1 << 6,
     MY_ASM_TRASH_AFTER_COMMAND               = 1 << 7,
 
 

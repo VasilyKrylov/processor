@@ -3,6 +3,7 @@
 
 enum commandsBytecode
 {
+    SPU_EMPTY   =  0,
     SPU_PUSH    =  1,
     SPU_POP     =  2,
     SPU_ADD     =  3,
@@ -36,6 +37,7 @@ enum commandsBytecode
 const size_t NUMBER_OF_REGISTERS = 8;
 const size_t REGISTER_NAME_LEN = 3;
 const size_t SHIFT_REGISTER = 5;
+const size_t SPU_MAX_COMMAND_VALUE = SPU_POPR;
 
 const size_t MY_ASM_VERSION = 1337+1;
 

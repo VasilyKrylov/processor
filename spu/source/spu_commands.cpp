@@ -2,9 +2,9 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "spu_commands.h"
-
 #include "spu.h"
+
+#include "spu_commands.h"
 
 int DoPush (spu_t *spu)
 {
@@ -320,28 +320,34 @@ int DoJmp (spu_t *spu)
     return RE_OK;
 }
 
-// int DoJb (spu_t *spu)
-// {
-//     spu->ip++;
+#define DO_CONDITION_JMP(FunctionName, CMP)                         \
+int Do##FunctionName (spu_t *spu)                                   \
+{                                                                   \
+    stackDataType first  = 0;                                       \
+    stackDataType second = 0;                                       \
+    int status = GetOperands (spu, &first, &second);                \
+                                                                    \
+    if (status != RE_OK)                                            \
+        return status;                                              \
+                                                                    \
+    spu->ip++;                                                      \
+                                                                    \
+    if (second CMP first)                                           \
+        spu->ip = (size_t) spu->bytecode[spu->ip];                  \
+    else                                                            \
+        spu->ip++;                                                  \
+                                                                    \
+    return RE_OK;                                                   \
+}
 
-//     if (spu->ip >= spu->bytecodeCnt) 
-//     {
-//         ERROR_PRINT ("%s", "Missing required argument for JUMP command")
-        
-//         return RE_MISSING_ARGUMENT;
-//     }
+DO_CONDITION_JMP (Jb,  CMP_BELOW)
+DO_CONDITION_JMP (Jbe, CMP_BELOW_OR_EQUAL)
+DO_CONDITION_JMP (Ja,  CMP_ABOVE)
+DO_CONDITION_JMP (Jae, CMP_ABOVE_OR_EQUAL)
+DO_CONDITION_JMP (Je,  CMP_EQUAL)
+DO_CONDITION_JMP (Jne, CMP_NOT_EQUAL)
 
-//     stackDataType first = 0;
-//     stackDataType second = 0;
-//     GetOperands (spu, &first, &second);
-
-//     if (second < first)
-//         spu->ip = (size_t) spu->bytecode[spu->ip];
-//     else
-//         spu->ip++;
-    
-//     return RE_OK;
-// }
+#undef DO_CONDITION_JMP
 
 int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 {
@@ -350,7 +356,7 @@ int GetOperands (spu_t *spu, stackDataType *first, stackDataType *second)
 
     if (status & STACK_TRYING_TO_POP_FROM_EMPTY_STACK)
     {
-        ERROR_PRINT ("%s", "There is not enought elements on stack for one of JUMP commands"); // replace JUMP with JBE JB...
+        ERROR_PRINT ("%s", "There is not enought elements on stack for one of JUMP commands");
 
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }

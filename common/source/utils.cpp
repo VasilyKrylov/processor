@@ -63,6 +63,8 @@ size_t GetWordLen (char *s, const char *delimiters)
 
 char *SkipSpaces (char *s)
 {
+    assert (s);
+
     s += strspn (s, " ");
 
     return s; 
@@ -71,7 +73,6 @@ char *SkipSpaces (char *s)
 int PrintSymbols (FILE *outputFile, size_t cnt, char c)
 {
     // NOTE: I know better to print 4 or 8 symbols at once, but I have no time for this know
-    // I believe in compiler optimisations
 
     for (size_t i = 0; i < cnt; i++)
     {

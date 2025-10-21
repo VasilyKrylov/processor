@@ -8,22 +8,6 @@
 #include "debug.h"
 #include "file.h"
 
-// TODO: new macro
-/*
-macro for :
-    int status = AsmRead (&myAsm, argv[1]);
-
-    if (status != 0)
-    {
-        ERROR ("%s", "Error in AsmRead()");
-
-        return status;
-    }
-*/
-
-// TODO: код генерация функций сравнения
-// TODO: код генерация свитч кейса
-
 int main (int argc, char **argv)
 {
     if (argc != 2)

@@ -9,6 +9,7 @@ const size_t SPU_VIDEO_WIDTH           = 50;
 const size_t SPU_VIDEO_HEIGHT          = 20;
 const size_t SPU_MAX_RAM_SIZE          = SPU_VIDEO_WIDTH * SPU_VIDEO_HEIGHT;
 
+
 enum spuErrors 
 {
     SPU_OK                  = 0,
@@ -82,6 +83,44 @@ struct spu_t
 #else
     #define SPU_VERIFY(stack) SPU_OK
 #endif //PRINT_DEBUG
+
+#include "spu_commands.h"
+struct command_function 
+{
+    commandsBytecode bytecode = SPU_EMPTY;
+    int (*spuFunction) (spu_t *spu) = NULL;
+};
+
+// #define COMMAND_FUNCTION (commandName) {.bytecode = SPU_##commandName, 
+//                                         .spuFunction = Do##commandName}
+
+const command_function commandFunctions[] = 
+{
+    {.bytecode = SPU_PUSH,  .spuFunction = DoPush   },
+    {.bytecode = SPU_POP,   .spuFunction = DoPop    },
+    {.bytecode = SPU_ADD,   .spuFunction = DoAdd    },
+    {.bytecode = SPU_SUB,   .spuFunction = DoSub    },
+    {.bytecode = SPU_DIV,   .spuFunction = DoDiv    },
+    {.bytecode = SPU_MUL,   .spuFunction = DoMul    },
+    {.bytecode = SPU_SQRT,  .spuFunction = DoSqrt   },
+    {.bytecode = SPU_OUT,   .spuFunction = DoOut    },
+    {.bytecode = SPU_IN,    .spuFunction = DoIn     },
+    {.bytecode = SPU_JMP,   .spuFunction = DoJmp    },
+    {.bytecode = SPU_JB,    .spuFunction = DoJb     },
+    {.bytecode = SPU_JBE,   .spuFunction = DoJbe    }, 
+    {.bytecode = SPU_JA,    .spuFunction = DoJa     },
+    {.bytecode = SPU_JAE,   .spuFunction = DoJae    },
+    {.bytecode = SPU_JE,    .spuFunction = DoJe     },
+    {.bytecode = SPU_JNE,   .spuFunction = DoJne    },
+    {.bytecode = SPU_CALL,  .spuFunction = DoCall   },
+    {.bytecode = SPU_RET,   .spuFunction = DoRet    },
+    {.bytecode = SPU_PUSHM, .spuFunction = DoPushm  },
+    {.bytecode = SPU_POPM,  .spuFunction = DoPopm   },
+    {.bytecode = SPU_PUSHR, .spuFunction = DoPushr  },
+    {.bytecode = SPU_POPR,  .spuFunction = DoPopr   },
+    {.bytecode = SPU_DRAW,  .spuFunction = DoDraw   },
+};
+const size_t commandFunctionsLen = sizeof(commandFunctions) / sizeof (commandFunctions[0]);
 
 
 int SpuCtor             (spu_t *spu

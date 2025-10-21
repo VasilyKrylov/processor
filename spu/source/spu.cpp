@@ -13,6 +13,8 @@
 #include "file.h"
 #include "utils.h"
 
+int (*functionPointers[SPU_MAX_COMMAND_VALUE + 1]) (spu_t *spu) = {NULL};
+
 int SpuReadHeader   (spu_t *spu, char **buffer);
 int SpuReadBytecode (spu_t *spu, char **buffer);
 
@@ -32,6 +34,11 @@ int SpuCtor (spu_t *spu
     spu->bytecode    = NULL;
     spu->bytecodeCnt = 0;
     spu->ip          = 0;
+
+    for (size_t i = 0; i < commandFunctionsLen; i++)
+    {
+        functionPointers[commandFunctions[i].bytecode] = commandFunctions[i].spuFunction;
+    }
 
     return SPU_OK;
 }
@@ -211,43 +218,15 @@ int SpuRun (spu_t *spu)
         getchar();
 #endif // PRINT_DEBUG
 
-        int status = 0;
+        int bytecode = spu->bytecode[spu->ip];
 
-        switch (spu->bytecode[spu->ip])
-        {
-            case SPU_PUSH:  status = DoPush  (spu);                 break;
-            case SPU_POP:   status = DoPop   (spu);                 break;
-            case SPU_ADD:   status = DoAdd   (spu);                 break;
-            case SPU_SUB:   status = DoSub   (spu);                 break;
-            case SPU_DIV:   status = DoDiv   (spu);                 break;
-            case SPU_MUL:   status = DoMul   (spu);                 break;
-            case SPU_SQRT:  status = DoSqrt  (spu);                 break;
-            case SPU_OUT:   status = DoOut   (spu);                 break;
-            case SPU_IN:    status = DoIn    (spu);                 break;
-            case SPU_PUSHR: status = DoPushr (spu);                 break;
-            case SPU_POPR:  status = DoPopr  (spu);                 break;
-            case SPU_JMP:   status = DoJmp   (spu);                 break;
-            case SPU_CALL:  status = DoCall  (spu);                 break;
-            case SPU_RET:   status = DoRet   (spu);                 break;
-            case SPU_PUSHM: status = DoPushm (spu);                 break;
-            case SPU_POPM:  status = DoPopm  (spu);                 break;
-            case SPU_DRAW:  status = DoDraw  (spu);                 break;
-            case SPU_JB:    CONDITION_JMP(spu, CMP_BELOW);          break;
-            case SPU_JBE:   CONDITION_JMP(spu, CMP_BELOW_OR_EQUAL); break;
-            case SPU_JA:    CONDITION_JMP(spu, CMP_ABOVE);          break;
-            case SPU_JAE:   CONDITION_JMP(spu, CMP_ABOVE_OR_EQUAL); break;
-            case SPU_JE:    CONDITION_JMP(spu, CMP_EQUAL);          break;
-            case SPU_JNE:   CONDITION_JMP(spu, CMP_NOT_EQUAL);      break;
-            case SPU_HLT:   return RE_OK;
-            
-            default:
-                ERROR ("Uknown command in bytecode: %d", spu->bytecode[spu->ip])
-                return RE_UKNOWN_BYTECODE;
-        }
+        if (bytecode == -1)
+            return RE_OK;
 
+        int status = functionPointers[bytecode](spu);
         if (status != RE_OK)
         {
-            // RuntimePrintError (status); // maybe do not call this function
+            // RuntimePrintError (status); 
             SPU_DUMP (spu, RED_BOLD_COLOR "Error occured..." COLOR_END);
 
             return status;

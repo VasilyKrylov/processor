@@ -8,11 +8,11 @@ POPR RAX
 
 PUSHR RAX
 PUSH 0
-JE :0; exit
+JE :0;      ; RAX == 0
 
 ; calc discriminant
 PUSHR RBX   
-PUSHR RBX
+PUSHR RBX   
 MUL         ; b^2
 
 PUSH 4      
@@ -31,10 +31,6 @@ JB :4       ; exit
 PUSHR RDX
 PUSH 0      ; D == 0
 JE :5       ; one root
-
-
-PUSH 13
-OUT 13
 
 PUSHR RDX
 SQRT
@@ -127,7 +123,7 @@ HLT
     OUT
 HLT
 
-:5  ; one root, D = 0
+:5  ; one root, D == 0
     PUSHR RBX
     PUSH 0
     JE :3

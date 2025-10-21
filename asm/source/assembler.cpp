@@ -22,8 +22,6 @@ int FindArgument                (asm_t *myAsm, argument_t *argument,
                                  char **lineStart);
 
 int AddLabel                    (asm_t *myAsm, char **lineStart);
-int GetLabelName                (int labelIdx);
-int GetLabelIdx                 (char c);
 int CheckLabel                  (asm_t *myAsm, int labelIdx);
                      
 bool IsRegisterCommand          (int commandBytecode);
@@ -145,7 +143,7 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
 
         int result = CheckLabel (myAsm, labelIdx);
         argument->value =(int) myAsm->labels[labelIdx];
-        // TODO: i do not remember, but for now this works
+        
         if (result != MY_ASM_OK)
             return result;
 
@@ -216,7 +214,7 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
     if (status != MY_ASM_OK) 
     {
         ERROR_PRINT ("%s:%lu Missing argument for command \"%s\"", 
-                        myAsm->fileName, myAsm->lineNumber, command->name);
+                     myAsm->fileName, myAsm->lineNumber, command->name);
 
         return status;
     }
@@ -244,43 +242,39 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     assert (lineStart);
     assert (*lineStart);
 
-    DEBUG_LOG ("*lineStart = '%c', %d;", **lineStart, **lineStart);
-    DEBUG_LOG ("*(lineStart+1) = '%c', %d;", *(*lineStart + 1), *(*lineStart + 1));
-    DEBUG_LOG ("*(lineStart+2) = '%c', %d;", *(*lineStart + 2), *(*lineStart + 2));
+    int labelIdx = -1;
+    int readedBytes = 0;
 
-    *lineStart += 1; // go to the argument
-    char labelName = *lineStart[0];
-    *lineStart += 1; // end of the string
+    int status = sscanf (*lineStart, ":%d %n", &labelIdx, &readedBytes);
+    *lineStart += readedBytes;
+    if (status != 1)
+    {
+        ERROR_PRINT ("%s:%lu Error reading label", 
+                     myAsm->fileName, myAsm->lineNumber);
 
-    int labelIdx = GetLabelIdx (labelName);
+        return MY_ASM_BAD_LABEL;
+    }
 
     int result = CheckLabel (myAsm, labelIdx);
-    if (result != MY_ASM_OK) 
+    if (result != MY_ASM_OK)
         return result;
 
+    DEBUG_PRINT ("%s", "Old value:\n");
+    DEBUG_PRINT ("myAsm->labels[%d] = %zd;\n", labelIdx, myAsm->labels[labelIdx]);
+
     if (myAsm->labels[labelIdx] != LABEL_DEFAULT_VALUE &&
-    myAsm->labels[labelIdx] != (ssize_t)myAsm->ip)
+        myAsm->labels[labelIdx] != (ssize_t)myAsm->ip)
     {
-        ERROR_PRINT ("%s:%lu Double assigning label with name %c", 
-                     myAsm->fileName, myAsm->lineNumber, labelIdx + '0');
-
-        ERROR_PRINT ("Old label value is = %zd, new label value = %lu", 
-                     myAsm->labels[labelIdx], myAsm->ip);
-
-        ERROR_PRINT ("%s", "");
+        ERROR_PRINT ("%s:%lu Double assigning label :%d; new label value = %lu", 
+                     myAsm->fileName, myAsm->lineNumber, labelIdx, myAsm->ip);
 
         return MY_ASM_LABEL_DOUBLE_ASSIGNMENT;
     }
-
-    DEBUG_PRINT ("%s", "Before assignment:\n");
-    DEBUG_PRINT ("myAsm->labels[%d] = %zd;\n", labelIdx, myAsm->labels[labelIdx]);
     
     myAsm->labels[labelIdx] = (ssize_t)myAsm->ip;
 
     DEBUG_PRINT ("%s", "After assignment:\n");
     DEBUG_PRINT ("myAsm->labels[%d] = %zd;\n", labelIdx, myAsm->labels[labelIdx]);
-
-    // FIXME: check for trash symbols
 
     return MY_ASM_OK;
 }
@@ -326,12 +320,14 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
 
     // TODO: new function token processing
     if (lineStart[0] == '\0') 
-        return MY_ASM_OK; // MY_ASM_EMPTY_LINE ?
+        return MY_ASM_OK;
     
     // TODO: new function TryFindLabel() (like FindCommand())
     if (lineStart[0] == ':')
     {
         int status = AddLabel (myAsm, &lineStart);
+
+        // FIXME: check for trash symbols
 
         return status;
     }
@@ -499,24 +495,14 @@ bool IsRegisterCommand (int commandBytecode)
     return (commandBytecode & registerBit);
 }
 
-int GetLabelIdx (char labelName)
-{
-    return labelName - '0';
-}
-
-int GetLabelName (int labelIdx)
-{
-    return labelIdx + '0';
-}
-
 int CheckLabel (asm_t *myAsm, int labelIdx)
 {
     if (labelIdx < 0 || (size_t)labelIdx > ARRAY_SIZE (myAsm->labels)) 
     {
-        ERROR_PRINT ("%s:%lu Bad label name, only [0-9] allowed, but you typed %c",
-                     myAsm->fileName, myAsm->lineNumber, GetLabelName(labelIdx));
+        ERROR_PRINT ("%s:%lu Bad label name, only [0-9] allowed, but you typed %d",
+                     myAsm->fileName, myAsm->lineNumber, labelIdx);
 
-        return MY_ASM_BAD_LABEL_NAME;
+        return MY_ASM_BAD_LABEL;
     }
 
     return MY_ASM_OK;
