@@ -1,8 +1,58 @@
-0000 	    1  130 	 PUSH 130
-0002 	    1   13 	 PUSH 13
-0004 	   42    0 	 POPR RAX
-0006 	   20    0 	 POPM [RAX]
-0008 	    1   13 	 PUSH 13
-0010 	   42    0 	 POPR RAX
-0012 	   19    0 	 PUSHM [RAX]
-0014 	   -1      	 HLT
+0000 	   21      	 DRAW
+0001 	    1    0 	 PUSH 0          
+0003 	   42    0 	 POPR RAX
+0005 	   35    0 	     PUSHR RAX
+0007 	    1   20 	     PUSH 20
+0009 	   14   53 	     JAE : 9 
+0011 	    1    0 	     PUSH 0          
+0013 	   42    1 	     POPR RBX
+0015 	   35    1 	         PUSHR RBX
+0017 	    1   50 	         PUSH 50
+0019 	   14   44 	         JAE :2     
+0021 	   17   55 	         CALL :8     
+0023 	   35    0 	         PUSHR RAX
+0025 	    1   50 	         PUSH 50
+0027 	    6      	         MUL
+0028 	   35    1 	         PUSHR RBX
+0030 	    3      	         ADD
+0031 	   42    2 	         POPR RCX
+0033 	   20    2 	         POPM [RCX]  
+0035 	   35    1 	         PUSHR RBX
+0037 	    1    1 	         PUSH 1
+0039 	    3      	         ADD
+0040 	   42    1 	         POPR RBX    
+0042 	   10   15 	     JMP :1
+0044 	   35    0 	     PUSHR RAX
+0046 	    1    1 	     PUSH 1
+0048 	    3      	     ADD
+0049 	   42    0 	     POPR RAX    
+0051 	   10    5 	 JMP :0
+0053 	   21      	     DRAW
+0054 	   -1      	 HLT
+0055 	   35    0 	     PUSHR RAX
+0057 	    1    9 	     PUSH 9
+0059 	    4      	     SUB
+0060 	   35    0 	     PUSHR RAX
+0062 	    1    9 	     PUSH 9
+0064 	    4      	     SUB
+0065 	    6      	     MUL    
+0066 	   35    1 	     PUSHR RBX
+0068 	    1   25 	     PUSH 25
+0070 	    4      	     SUB
+0071 	   35    1 	     PUSHR RBX
+0073 	    1   25 	     PUSH 25
+0075 	    4      	     SUB
+0076 	    6      	     MUL    
+0077 	    3      	     ADD
+0078 	   42    2 	     POPR RCX
+0080 	   35    2 	     PUSHR RCX
+0082 	    8      	     OUT
+0083 	   35    2 	     PUSHR RCX
+0085 	    1    9 	     PUSH 9  
+0087 	   12   95 	     JBE :7
+0089 	    1  666 	     PUSH 666
+0091 	    8      	     OUT
+0092 	    1   46 	     PUSH 46 
+0094 	   18      	 RET
+0095 	    1   64 	     PUSH 64 
+0097 	   18      	 RET

@@ -1,0 +1,26 @@
+DRAW
+
+PUSH 333
+OUT
+
+PUSH 1
+POPR RAX
+
+:0
+    PUSHR RAX
+    PUSH 100
+    JAE : 1
+
+    PUSH 42
+    POPM [RAX]
+
+    PUSHR RAX
+    PUSH 1
+    ADD
+    POPR RAX
+JMP :0
+
+
+:1
+DRAW
+HLT

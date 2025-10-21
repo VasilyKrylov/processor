@@ -10,4 +10,4 @@ spu/tmp*
 tmp* 
 .out
 .vscode/
-pr
+preprocessor*

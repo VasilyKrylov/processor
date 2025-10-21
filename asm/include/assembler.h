@@ -87,6 +87,7 @@ const command_t commands[] =
     SPU_COMMAND (POPM,  MY_ASM_ARG_REGISTER_ADDRESS ),
     SPU_COMMAND (PUSHR, MY_ASM_ARG_REGISTER         ),
     SPU_COMMAND (POPR,  MY_ASM_ARG_REGISTER         ),
+    SPU_COMMAND (DRAW,  MY_ASM_ARG_EMPTY            ),
     SPU_COMMAND (HLT,   MY_ASM_ARG_EMPTY            )
 };
 const size_t CommandsNumber = sizeof(commands) / sizeof(command_t);

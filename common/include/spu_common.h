@@ -26,6 +26,7 @@ enum commandsBytecode
 
     SPU_PUSHM   =  19,
     SPU_POPM    =  20,
+    SPU_DRAW    =  21,
 
     SPU_PUSHR   =  35,
     SPU_POPR    =  42,

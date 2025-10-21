@@ -1,0 +1,82 @@
+DRAW
+
+PUSH 0          ;RAX = 0
+POPR RAX
+
+:0
+    PUSHR RAX
+    PUSH 20
+    JAE : 9 ; RAX < 20
+
+    PUSH 0          ;RBX = 0
+    POPR RBX
+
+    :1
+        PUSHR RBX
+        PUSH 50
+        JAE :2     ;RBX < 50
+
+        CALL :8     ; push on stack ' ' or '*'
+
+        PUSHR RAX
+        PUSH 50
+        MUL
+        PUSHR RBX
+        ADD
+        POPR RCX
+        POPM [RCX]  ; RAM[RAX * 50 + RBX] = pop from stack
+
+        PUSHR RBX
+        PUSH 1
+        ADD
+        POPR RBX    ;RBX+=1
+    JMP :1
+
+    :2
+    PUSHR RAX
+    PUSH 1
+    ADD
+    POPR RAX    ;RAX+=1
+JMP :0
+
+:9
+    DRAW
+HLT
+
+:8
+    PUSHR RAX
+    PUSH 9
+    SUB
+    PUSHR RAX
+    PUSH 9
+    SUB
+    MUL    ; (RAX - 9) ^ 2
+
+
+    PUSHR RBX
+    PUSH 25
+    SUB
+    PUSHR RBX
+    PUSH 25
+    SUB
+    MUL    ; (RBX - 25) ^ 2
+
+    ADD
+
+    POPR RCX
+    PUSHR RCX
+    OUT
+    PUSHR RCX
+
+    PUSH 9  ; = r^2
+
+    JBE :7
+
+    PUSH 666
+    OUT
+
+    PUSH 46 ; = '.'
+RET
+    :7
+    PUSH 64 ; = '@'
+RET
