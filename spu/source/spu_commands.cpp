@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <math.h>
 
 #include "spu_commands.h"
@@ -493,6 +494,8 @@ int DoDraw (spu_t *spu)
     printf ("\n");
 
     spu->ip++;
+
+    usleep (100 * 1000);
 
     return SPU_OK;
 }
