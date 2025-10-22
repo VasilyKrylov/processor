@@ -1,115 +1,66 @@
-0000 	    9      	 IN
-0001 	    9      	 IN
-0002 	    9      	 IN
-0003 	   42    2 	 POPR RCX
-0005 	   42    1 	 POPR RBX
-0007 	   42    0 	 POPR RAX
-0009 	   35    0 	 PUSHR RAX
-0011 	    1    0 	 PUSH 0
-0013 	   15   86 	 JE :0
-0015 	   35    1 	 PUSHR RBX   
-0017 	   35    1 	 PUSHR RBX   
-0019 	    6      	 MUL         
-0020 	    1    4 	 PUSH 4      
-0022 	   35    0 	 PUSHR RAX
-0024 	   35    2 	 PUSHR RCX
-0026 	    6      	 MUL
-0027 	    6      	 MUL
-0028 	    4      	 SUB         
-0029 	   42    3 	 POPR RDX    
-0031 	   35    3 	 PUSHR RDX
-0033 	    1    0 	 PUSH 0      
-0035 	   11  142 	 JB :4       
-0037 	   35    3 	 PUSHR RDX
-0039 	    1    0 	 PUSH 0      
-0041 	   15  146 	 JE :5       
-0043 	   35    3 	 PUSHR RDX
-0045 	    7      	 SQRT
-0046 	   42    3 	 POPR RDX    
-0048 	   17  170 	 CALL :9
-0050 	   42    4 	 POPR REX
-0052 	   35    3 	 PUSHR RDX
-0054 	    1   -1 	 PUSH -1
-0056 	    6      	 MUL
-0057 	   42    3 	 POPR RDX
-0059 	   17  170 	 CALL :9
-0061 	   42    5 	 POPR RFX
-0063 	   35    5 	 PUSHR RFX
-0065 	   35    4 	 PUSHR REX
-0067 	   15   79 	 JE :6
-0069 	    1    2 	 PUSH 2
-0071 	    8      	 OUT
-0072 	   35    5 	 PUSHR RFX
-0074 	    8      	 OUT
-0075 	   35    4 	 PUSHR REX
-0077 	    8      	 OUT
-0078 	   -1      	 HLT
-0079 	    1    1 	 PUSH 1 
-0081 	    8      	 OUT
-0082 	   35    5 	 PUSHR RFX
-0084 	    8      	 OUT
-0085 	   -1      	 HLT
-0086 	   35    1 	     PUSHR RBX
-0088 	    1    0 	     PUSH 0
-0090 	   15  121 	     JE :1           
-0092 	   35    2 	     PUSHR RCX
-0094 	    1    0 	     PUSH 0
-0096 	   15  135 	     JE :3           
-0098 	   35    2 	     PUSHR RCX
-0100 	    1   -1 	     PUSH -1
-0102 	    6      	     MUL
-0103 	   35    1 	     PUSHR RBX
-0105 	    5      	     DIV
-0106 	    8      	     OUT
-0107 	   -1      	 HLT
-0108 	   35    1 	     PUSHR RBX
-0110 	    1   -1 	     PUSH -1 
-0112 	    6      	     MUL         
-0113 	   35    0 	     PUSHR RAX
-0115 	    1    2 	     PUSH 2
-0117 	    6      	     MUL
-0118 	    5      	     DIV         
-0119 	    8      	     OUT
-0120 	   18      	 RET
-0121 	   35    2 	     PUSHR RCX
-0123 	    1    0 	     PUSH 0
-0125 	   15  131 	     JE :2
-0127 	    1    0 	     PUSH 0      
-0129 	    8      	     OUT
-0130 	   -1      	 HLT
-0131 	    1    8 	     PUSH 8
-0133 	    8      	     OUT
-0134 	   -1      	 HLT
-0135 	    1    1 	     PUSH 1
-0137 	    8      	     OUT
-0138 	    1    0 	     PUSH 0
-0140 	    8      	     OUT
-0141 	   -1      	 HLT
-0142 	    1    0 	     PUSH 0
-0144 	    8      	     OUT
-0145 	   -1      	 HLT
-0146 	   35    1 	     PUSHR RBX
-0148 	    1    0 	     PUSH 0
-0150 	   15  135 	     JE :3
-0152 	    1    1 	     PUSH 1
-0154 	    8      	     OUT
-0155 	   35    1 	     PUSHR RBX
-0157 	    1   -1 	     PUSH -1
-0159 	    6      	     MUL
-0160 	    1    2 	     PUSH 2
-0162 	   35    0 	     PUSHR RAX
-0164 	    6      	     MUL
-0165 	    5      	     DIV
-0166 	    8      	     OUT
-0167 	   -1      	 HLT
-0168 	   15  146 	 JE :5
-0170 	   35    1 	     PUSHR RBX
-0172 	    1   -1 	     PUSH -1
-0174 	    6      	     MUL
-0175 	   35    3 	     PUSHR RDX
-0177 	    3      	     ADD
-0178 	   35    0 	     PUSHR RAX
-0180 	    1    2 	     PUSH 2
-0182 	    6      	     MUL
-0183 	    5      	     DIV
-0184 	   18      	 RET
+0000 	   21      	 DRAW
+0001 	    1    0 	 PUSH 0
+0003 	   42    3 	 POPR RDX
+0005 	   35    3 	     PUSHR RDX
+0007 	    1   28 	     PUSH 28
+0009 	   14  113 	     JAE :5
+0011 	    1    0 	     PUSH 0          
+0013 	   42    0 	     POPR RAX
+0015 	   35    0 	         PUSHR RAX
+0017 	    1   20 	         PUSH 20
+0019 	   14   63 	         JAE : 9 
+0021 	    1    0 	         PUSH 0          
+0023 	   42    1 	         POPR RBX
+0025 	   35    1 	             PUSHR RBX
+0027 	    1   50 	             PUSH 50
+0029 	   14   54 	             JAE :2     
+0031 	   17   73 	             CALL :8     
+0033 	   35    0 	             PUSHR RAX
+0035 	    1   50 	             PUSH 50
+0037 	    6      	             MUL
+0038 	   35    1 	             PUSHR RBX
+0040 	    3      	             ADD
+0041 	   42    2 	             POPR RCX
+0043 	   20    2 	             POPM [RCX]  
+0045 	   35    1 	             PUSHR RBX
+0047 	    1    1 	             PUSH 1
+0049 	    3      	             ADD
+0050 	   42    1 	             POPR RBX    
+0052 	   10   25 	         JMP :1
+0054 	   35    0 	         PUSHR RAX
+0056 	    1    1 	         PUSH 1
+0058 	    3      	         ADD
+0059 	   42    0 	         POPR RAX    
+0061 	   10   15 	     JMP :0
+0063 	   21      	         DRAW
+0064 	   35    3 	         PUSHR RDX
+0066 	    1    1 	         PUSH 1
+0068 	    3      	         ADD
+0069 	   42    3 	         POPR RDX
+0071 	   10    5 	 JMP :3
+0073 	   35    0 	         PUSHR RAX
+0075 	    1    9 	         PUSH 9
+0077 	    4      	         SUB
+0078 	   35    0 	         PUSHR RAX
+0080 	    1    9 	         PUSH 9
+0082 	    4      	         SUB
+0083 	    6      	         MUL    
+0084 	   35    1 	         PUSHR RBX
+0086 	    1   25 	         PUSH 25
+0088 	    4      	         SUB
+0089 	   35    1 	         PUSHR RBX
+0091 	    1   25 	         PUSH 25
+0093 	    4      	         SUB
+0094 	    6      	         MUL    
+0095 	    3      	         ADD
+0096 	   42    2 	         POPR RCX
+0098 	   35    2 	         PUSHR RCX
+0100 	   35    3 	         PUSHR RDX
+0102 	   35    3 	         PUSHR RDX  
+0104 	    6      	         MUL         
+0105 	   12  110 	         JBE :7
+0107 	    1   46 	         PUSH 46 
+0109 	   18      	     RET
+0110 	    1   64 	         PUSH 64 
+0112 	   18      	     RET
+0113 	   -1      	 HLT

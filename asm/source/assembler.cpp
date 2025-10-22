@@ -24,8 +24,7 @@ int FindArgument                (asm_t *myAsm, argument_t *argument,
 int AddLabel                    (asm_t *myAsm, char **lineStart);
 int CheckLabel                  (asm_t *myAsm, int labelIdx);
                      
-bool IsRegisterCommand          (int commandBytecode);
-bool IsJumpCommand              (int commandBytecode);
+// bool IsRegisterCommand          (int commandBytecode);
 
 int GetRegisterBytecode         (char *registerName, int *readedBytes, int *bytecode);
 int GetRegisterAddressBytecode  (char *registerName, int *readedBytes, int *bytecode);
@@ -318,7 +317,6 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     char *lineStart = myAsm->text.lines[strIdx].start;
           lineStart = SkipSpaces (lineStart);
 
-    // TODO: new function token processing
     if (lineStart[0] == '\0') 
         return MY_ASM_OK;
     
@@ -452,9 +450,9 @@ int PrintBytecode (FILE *outputFile, asm_t *myAsm)
             return COMMON_ERROR_WRITE_TO_FILE;
     }
 
-
     return MY_ASM_OK;
 }
+
 int PrintListingLine (asm_t *myAsm, size_t instructionStart)
 {
     // TODO: add labels definitios to listring file
@@ -487,13 +485,12 @@ int PrintListingLine (asm_t *myAsm, size_t instructionStart)
     return MY_ASM_OK;
 }
 
+// bool IsRegisterCommand (int commandBytecode)
+// {
+//     const int registerBit = 1 << SHIFT_REGISTER;
 
-bool IsRegisterCommand (int commandBytecode)
-{
-    const int registerBit = 1 << SHIFT_REGISTER;
-
-    return (commandBytecode & registerBit);
-}
+//     return (commandBytecode & registerBit);
+// }
 
 int CheckLabel (asm_t *myAsm, int labelIdx)
 {

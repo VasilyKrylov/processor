@@ -13,7 +13,7 @@
 #include "file.h"
 #include "utils.h"
 
-int (*functionPointers[SPU_MAX_COMMAND_VALUE + 1]) (spu_t *spu) = {NULL};
+int (*spuActions[SPU_MAX_COMMAND_VALUE + 1]) (spu_t *spu) = {NULL};
 
 int SpuReadHeader   (spu_t *spu, char **buffer);
 int SpuReadBytecode (spu_t *spu, char **buffer);
@@ -37,7 +37,7 @@ int SpuCtor (spu_t *spu
 
     for (size_t i = 0; i < commandFunctionsLen; i++)
     {
-        functionPointers[commandFunctions[i].bytecode] = commandFunctions[i].spuFunction;
+        spuActions[commandFunctions[i].bytecode] = commandFunctions[i].spuFunction;
     }
 
     return SPU_OK;
@@ -64,7 +64,7 @@ int SpuRead (spu_t *spu, char *inputFileName)
         return status;
     }
 
-    status = SpuReadBytecode(spu, &bufferPtr);
+    status = SpuReadBytecode (spu, &bufferPtr);
     if (status != 0) 
     {
         free (buffer);
@@ -150,7 +150,7 @@ int SpuReadBytecode (spu_t *spu, char **buffer)
             ERROR ("There is %lu bytecodes in the input file ", i) // TODO: add file name in this error message
             ERROR ("Excepted %lu bytecodes from this file", spu->bytecodeCnt) 
 
-            return 1; // FIXME:
+            return 1;
         }
         if (status == 0)
         {
@@ -184,25 +184,6 @@ int SpuDtor (spu_t *spu)
     return COMMON_OK;
 }
 
-// maybe not the best solution, but I think better than a lot of functions
-#define CONDITION_JMP(spu, CMP)                                     \
-{                                                                   \
-    stackDataType first  = 0;                                       \
-    stackDataType second = 0;                                       \
-    status = GetOperands (spu, &first, &second);                    \
-                                                                    \
-    if (status == RE_OK)                                            \
-    {                                                               \
-        if (second CMP first)                                       \
-            status = DoJmp (spu);                                   \
-        else                                                        \
-        {                                                           \
-            spu->ip++;                                              \
-            spu->ip++;                                              \
-        }                                                           \
-    }                                                               \
-}
-
 int SpuRun (spu_t *spu)
 {
     if (spu == NULL) return COMMON_ERROR_NULL_POINTER;
@@ -223,7 +204,7 @@ int SpuRun (spu_t *spu)
         if (bytecode == -1)
             return RE_OK;
 
-        int status = functionPointers[bytecode](spu);
+        int status = spuActions[bytecode](spu);
         if (status != RE_OK)
         {
             // RuntimePrintError (status); 
@@ -235,9 +216,7 @@ int SpuRun (spu_t *spu)
 
     return RE_OK;
 }
-#undef CONDITION_JMP
 
-// TODO: what is meaning of this function, if I print errors in spu_commands.cpp ?
 void RuntimePrintError (int error)
 {
     DEBUG_LOG ("error = %d\n", error);
@@ -246,7 +225,6 @@ void RuntimePrintError (int error)
 
     printf("%s", RED_BOLD_COLOR);
 
-    // TODO: add missing argument for PUSH, POP and other?
     if (error & RE_MISSING_ARGUMENT)               printf("%s", "Missing argument for instruction!\n");
     if (error & RE_NOT_ENOGUH_ELEMENTS_ON_STACK)   printf("%s", "There is no enough elements on stack to run instruction!\n");
     if (error & RE_DIVISION_BY_ZERO)               printf("%s", "Bro, you can't divide by zero -_-\n");
