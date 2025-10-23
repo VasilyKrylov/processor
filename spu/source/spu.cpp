@@ -13,6 +13,9 @@
 #include "file.h"
 #include "utils.h"
 
+// FIXME  : use typedef
+//        : move to asm_t
+//        : use calloc 
 int (*spuActions[SPU_MAX_COMMAND_VALUE + 1]) (spu_t *spu) = {NULL};
 
 int SpuReadHeader   (spu_t *spu, char **buffer);
@@ -79,19 +82,19 @@ int SpuRead (spu_t *spu, char *inputFileName)
 
 int SpuReadHeader (spu_t *spu, char **buffer)
 {
-    size_t version = 133722869;
+    size_t version = 0;
     int bufferOffset = 0;
 
     int status = sscanf (*buffer, "%lu %n", &version, &bufferOffset);
     *buffer += bufferOffset;
 
-    if (status == EOF) // TODO: make new function
+    if (status == EOF) // TODO: make macro's
     {
         ERROR_PRINT ("%s", "There is no version value in file...");
 
         return COMMON_ERROR_TO_EARLY_EOF;
     }
-    if (status == 0)
+    if (status != 1)
     {
         ERROR_PRINT ("%s", "Error reading version from file...");
 
@@ -115,7 +118,7 @@ int SpuReadHeader (spu_t *spu, char **buffer)
 
         return COMMON_ERROR_TO_EARLY_EOF;
     }
-    if (status == 0)
+    if (status != 1)
     {
         ERROR ("%s", "Error reading version from file...")
 
@@ -127,6 +130,9 @@ int SpuReadHeader (spu_t *spu, char **buffer)
 
 int SpuReadBytecode (spu_t *spu, char **buffer)
 {
+    assert(spu);
+// FIXME:
+
     spu->bytecode = (int *) calloc (spu->bytecodeCnt, sizeof(int));
     if (spu->bytecode == NULL)
     {
@@ -152,7 +158,7 @@ int SpuReadBytecode (spu_t *spu, char **buffer)
 
             return 1;
         }
-        if (status == 0)
+        if (status != 1)
         {
             ERROR ("Error reading bytecode from file \"%s\"."
                    "Bytecode with index [%lu] was incorrect", "FILE NAME HERE", i + 1)
@@ -167,7 +173,7 @@ int SpuReadBytecode (spu_t *spu, char **buffer)
 
 int SpuDtor (spu_t *spu)
 {
-    if (spu == NULL) return COMMON_ERROR_NULL_POINTER;
+    assert (spu);
 
     StackDtor (&spu->stack);
     StackDtor (&spu->stackReturn);
@@ -186,7 +192,7 @@ int SpuDtor (spu_t *spu)
 
 int SpuRun (spu_t *spu)
 {
-    if (spu == NULL) return COMMON_ERROR_NULL_POINTER;
+    assert (spu);
 
     DEBUG_LOG ("%s", "HELLO FRIENDS, TODAY WE WILL RUN SOFT PROCESSOR UNIT");
     DEBUG_LOG ("%s", "LET'S GOOOOOOOOOOOOOOOOOOOOOOOOOO");
@@ -201,7 +207,7 @@ int SpuRun (spu_t *spu)
 
         int bytecode = spu->bytecode[spu->ip];
 
-        if (bytecode == -1)
+        if (bytecode == SPU_HLT)
             return RE_OK;
 
         int status = spuActions[bytecode](spu);

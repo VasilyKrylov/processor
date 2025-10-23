@@ -34,11 +34,12 @@ enum commandsBytecode
     SPU_HLT     = -1,
 }; 
 
-const size_t NUMBER_OF_REGISTERS = 8;
-const size_t REGISTER_NAME_LEN = 3;
-const size_t SHIFT_REGISTER = 5;
-const size_t SPU_MAX_COMMAND_VALUE = SPU_POPR;
-
-const size_t MY_ASM_VERSION = 1337+1;
+const size_t NUMBER_OF_REGISTERS    = 8;
+const size_t REGISTER_NAME_LEN      = 3;
+const size_t SHIFT_REGISTER         = 5;
+const size_t SPU_MAX_COMMAND_VALUE  = SPU_POPR;
+const size_t SPU_MAX_LABEL_LEN      = 63;
+const size_t SPU_MAX_LABELS_COUNT   = 10;
+const size_t MY_ASM_VERSION         = 1337+1;
 
 #endif // K_SPU_COMMON_H

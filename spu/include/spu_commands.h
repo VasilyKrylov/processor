@@ -42,6 +42,9 @@ struct command_function
     int (*spuFunction) (spu_t *spu) = NULL;
 };
 
+typedef int (*spuFunction)(spu_t *spu);
+
+
 // #define COMMAND_FUNCTION (commandName) {.bytecode = SPU_##commandName,
 //                                         .spuFunction = Do##commandName}
 

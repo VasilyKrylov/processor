@@ -50,76 +50,59 @@ int DoPop (spu_t *spu)
     return status;
 }
 
-int DoAdd (spu_t *spu)
-{
-    DEBUG_LOG ("%s", "ADD");
-    if (spu->stack.size < 2) // not here
-    {
-        ERROR_PRINT ("%s", "ERROR in ADD command, there are less than 2 elements on the stack");
-        
-        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
-    }
-    DEBUG_LOG ("\tstack->size = %lu", spu->stack.size);
-
-    stackDataType a = 0;
-    stackDataType b = 0;
-
-    StackPop (&spu->stack, &a); // TODO: check here; what?
-    StackPop (&spu->stack, &b);
-
-    DEBUG_LOG ("\ta, b: %d %d", a, b);
-
-    StackPush (&spu->stack, a + b);
-
-    spu->ip += 1;
-
-    return RE_OK;
+#define DO_MATH_OPERATION(functionName, mathOperation)                              \
+int Do##functionName (spu_t *spu)                                                   \
+{                                                                                   \
+    DEBUG_LOG ("%s", "Do"#functionName);                                            \
+                                                                                    \
+    stackDataType a = 0;                                                            \
+    stackDataType b = 0;                                                            \
+                                                                                    \
+    int status  = StackPop (&spu->stack, &a);                                       \
+        status |= StackPop (&spu->stack, &b);                                       \
+    if (status != STACK_OK)                                                         \
+    {                                                                               \
+        ERROR_PRINT ("%s", "ERROR in Do" #functionName " command");                 \
+        ERROR_PRINT ("%s", "There are less than 2 elements on the stack");          \
+                                                                                    \
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;                                     \
+    }                                                                               \
+    DEBUG_LOG ("\tstack->size = %lu", spu->stack.size);                             \
+                                                                                    \
+    DEBUG_LOG ("\ta, b: %d %d", a, b);                                              \
+                                                                                    \
+    StackPush (&spu->stack, b mathOperation a);                                     \
+                                                                                    \
+    spu->ip += 1;                                                                   \
+                                                                                    \
+    return RE_OK;                                                                   \
 }
-
-int DoSub (spu_t *spu)
-{
-    DEBUG_LOG ("%s", "SUB");
-    if (spu->stack.size < 2)
-    {
-        ERROR_PRINT ("%s", "ERROR in SUB command, there are less than 2 elements on the stack");
-        
-        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
-    }
-
-    stackDataType a = 0;
-    stackDataType b = 0;
-
-    StackPop (&spu->stack, &a);
-    StackPop (&spu->stack, &b);
-    DEBUG_LOG ("\ta, b: %d %d", a, b);
-
-    StackPush (&spu->stack, b - a);
-
-    spu->ip += 1;
-
-    return RE_OK;
-}
+DO_MATH_OPERATION(Add, +)
+DO_MATH_OPERATION(Sub, -)
+DO_MATH_OPERATION(Mul, *)
+#undef DO_MATH_OPERATION
 
 int DoDiv (spu_t *spu)
 {
     DEBUG_LOG ("%s", "DIV");
-    if (spu->stack.size < 2)
-    {
-        ERROR_PRINT ("%s", "ERROR in DIV command, there are less than 2 elements on the stack");
-        
-        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
-    }
 
     stackDataType a = 0;
     stackDataType b = 0;
 
-    StackPop (&spu->stack, &a);
-    StackPop (&spu->stack, &b);
-
+    int status  = StackPop (&spu->stack, &a);
+        status |= StackPop (&spu->stack, &b);
+    if (status != STACK_OK)
+    {
+        ERROR_PRINT ("%s", "ERROR in DIV command");
+        ERROR_PRINT ("%s", "There are less than 2 elements on the stack");
+        
+        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
+    }   
 
     if (a == 0)
     {
-        ERROR_PRINT ("%s", "ERROR in DIV command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in DIV command");
+        ERROR_PRINT ("%s", "Can't divide by zero");
 
         return RE_DIVISION_BY_ZERO;
     }
@@ -133,45 +116,21 @@ int DoDiv (spu_t *spu)
     return RE_OK;
 }
 
-int DoMul (spu_t *spu)
-{
-    DEBUG_LOG ("%s", "MUL");
-    if (spu->stack.size < 2)
-    {
-        ERROR_PRINT ("%s", "ERROR in MUL command, there are less than 2 elements on the stack");
-        
-        return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
-    }
-
-    stackDataType a = 0;
-    stackDataType b = 0;
-
-    StackPop (&spu->stack, &a); // TODO: check here
-    StackPop (&spu->stack, &b);
-
-    StackPush (&spu->stack, a * b);
-    
-    DEBUG_LOG ("\ta, b: %d %d", a, b);
-
-    spu->ip += 1;
-
-    return RE_OK;
-}
-
 // no float
 int DoSqrt (spu_t *spu)
 {
     DEBUG_LOG ("%s", "SQRT");
 
-    if (spu->stack.size < 1)
+    stackDataType a = 0;
+
+    int status  = StackPop (&spu->stack, &a);
+    if (status != STACK_OK)
     {
-        ERROR_PRINT ("%s", "ERROR in MUL command, there are less than 2 elements on the stack");
+        ERROR_PRINT ("%s", "ERROR in SQRT command");
+        ERROR_PRINT ("%s", "There is less than 1 element on the stack");
         
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
-    stackDataType a = 0;
-
-    StackPop (&spu->stack, &a);
 
     if (a < 0)
     {
@@ -192,15 +151,16 @@ int DoSqrt (spu_t *spu)
 
 int DoOut (spu_t *spu)
 {
-    if (spu->bytecodeCnt < 1)
-    {
-        ERROR_PRINT ("%s", "ERROR in OUT command, there is less than 1 element on the stack");
+    stackDataType outValue = 0;
 
+    int status  = StackPop (&spu->stack, &outValue);
+    if (status != STACK_OK)
+    {
+        ERROR_PRINT ("%s", "ERROR in OUT command");
+        ERROR_PRINT ("%s", "There is less than 1 element on the stack");
+        
         return RE_NOT_ENOGUH_ELEMENTS_ON_STACK;
     }
-
-    stackDataType outValue = 0;
-    StackPop (&spu->stack, &outValue);
 
     printf ("OUT: %d\n", outValue); 
 
@@ -218,7 +178,7 @@ int DoIn (spu_t *spu)
 
     if (status != 1) 
     {
-        ERROR_PRINT ("%s", "STUPID PEACE OF SHIT, THIS IS NOT INTEGER NUMBER!");
+        ERROR_PRINT ("%s", "STUPID PIECE     OF SHIT, THIS IS NOT INTEGER NUMBER!");
         
         return RE_INVALID_INPUT;
     }
@@ -246,6 +206,7 @@ int DoPushr (spu_t *spu)
     }
 
     int regIdx = spu->bytecode[spu->ip];
+    
     int regVal = spu->regs[regIdx]; // FIXME check
 
     DEBUG_LOG ("R%cX = %d;\n", char('A' + regIdx), regVal); // TODO: make function to get register name by its index
@@ -320,8 +281,8 @@ int DoJmp (spu_t *spu)
     return RE_OK;
 }
 
-#define DO_CONDITION_JMP(FunctionName, CMP)                         \
-int Do##FunctionName (spu_t *spu)                                   \
+#define DO_CONDITION_JMP(functionName, CMP)                         \
+int Do##functionName (spu_t *spu)                                   \
 {                                                                   \
     stackDataType first  = 0;                                       \
     stackDataType second = 0;                                       \
@@ -494,7 +455,7 @@ int DoDraw (spu_t *spu)
         if (i % SPU_VIDEO_WIDTH == 0) 
             printf ("\n");
     
-        printf ("%c", spu->ram[i]);
+        printf ("%c ", spu->ram[i]);
     }
 
     printf ("\n");

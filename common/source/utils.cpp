@@ -83,3 +83,21 @@ int PrintSymbols (FILE *outputFile, size_t cnt, char c)
 
     return COMMON_OK;
 }
+
+unsigned long HashDjb2 (char *str, char delimiter) 
+{
+    unsigned long hash = 5381;
+    int c = 'a';
+
+    DEBUG_LOG("*str = \"%s\";", str);
+
+    while ((c != '\0') && (c != delimiter))
+    {
+        hash = ((hash << 5) + hash) + (unsigned long)c;
+        c = *(str++);
+
+        DEBUG_LOG ("%c\t%d", c, c);
+    }
+
+    return hash;
+}
