@@ -76,6 +76,8 @@ HLT
     PUSH 0
     JE :3;           ; if c == 0
 
+    PUSH 1
+    OUT
     PUSHR RCX
     PUSH -1
     MUL

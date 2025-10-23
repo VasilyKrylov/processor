@@ -77,6 +77,8 @@ int AsmCtor (asm_t *myAsm)
 
 int AsmRead (asm_t *myAsm, char *inputFileName) // FIXME asserts
 {
+    assert (myAsm);
+
     DEBUG_LOG ("%s", "AsmRead()");
 
     int status = TextCtor (inputFileName, &(myAsm->text));
@@ -100,6 +102,8 @@ int AsmRead (asm_t *myAsm, char *inputFileName) // FIXME asserts
 
 int AllocateBytecode (asm_t *myAsm)
 {
+    assert (myAsm);
+
     myAsm->bytecode = (int *) calloc (myAsm->instructionsCnt, sizeof(int));
 
     if (myAsm->bytecode == NULL)
@@ -113,6 +117,8 @@ int AllocateBytecode (asm_t *myAsm)
 
 int ResizeBytecode (asm_t *myAsm)
 {
+    assert (myAsm);
+
     // + 1 beacuse we check space for current command and potential argument
 
     if (myAsm->ip + 1 >= myAsm->instructionsCnt)
@@ -265,6 +271,7 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
 
 int AddLabel (asm_t *myAsm, char **lineStart)
 {
+    assert (myAsm);
     assert (lineStart);
     assert (*lineStart);
 
@@ -282,6 +289,9 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     {
         ERROR_PRINT ("%s:%lu Error adding label, max number of labels is %lu",
                      myAsm->fileName, myAsm->lineNumber, SPU_MAX_LABELS_COUNT);
+
+        ERROR_PRINT ("%s:%lu All Ded tasks can be complited with less than 11 labels",
+                     myAsm->fileName, myAsm->lineNumber);
     
         return MY_ASM_BAD_LABEL;
     }
@@ -320,6 +330,8 @@ int AddLabel (asm_t *myAsm, char **lineStart)
 
 int FindLabel (asm_t *myAsm, unsigned long hash)
 {
+    assert (myAsm);
+
     int idx = -1;
 
     for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
@@ -336,6 +348,9 @@ int FindLabel (asm_t *myAsm, unsigned long hash)
 
 const command_t *FindCommand (char **lineStart)
 {
+    assert(lineStart);
+    assert(*lineStart);
+
     size_t wordLen = GetWordLen (*lineStart, " ");
     
     DEBUG_LOG ("wordLen = %lu;", wordLen);
@@ -357,6 +372,8 @@ const command_t *FindCommand (char **lineStart)
 
 int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
 {
+    assert (myAsm);
+    
     DEBUG_PRINT ("%s", "\n\n");
 
     DEBUG_PRINT ("[%lu].len: %lu\n", 
@@ -423,6 +440,8 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
 
 int Assemble (asm_t *myAsm)
 {
+    assert (myAsm);
+
     int status = AssembleFirst (myAsm);
     if (status != 0)
     {
@@ -474,12 +493,10 @@ int AssembleFinal (asm_t *myAsm)
     assert (myAsm);
 
     DEBUG_PRINT ("%s", "==========================================================\n");
-    DEBUG_PRINT ("%s", "                   ASSEMBLE - FINAL PASS!                 \n");
+    DEBUG_PRINT ("%s", "                   ASSEMBLE - FINAL!                      \n");
     DEBUG_PRINT ("%s", "==========================================================\n");
 
     myAsm->ip = 0;
-
-    DEBUG_LOG ("Allocated bytecode array on %lu elements", myAsm->instructionsCnt);
 
     for (size_t i = 0; myAsm->text.lines[i].start != 0; i++)
     {
@@ -495,6 +512,9 @@ int AssembleFinal (asm_t *myAsm)
 
 int PrintBinary (const char *outputFileName, asm_t *myAsm)
 {
+    assert (myAsm);
+    assert (outputFileName);
+
     FILE *outputFile = fopen (outputFileName, "w");
     if (outputFile == NULL)
     {
@@ -522,6 +542,9 @@ int PrintBinary (const char *outputFileName, asm_t *myAsm)
 
 int PrintHeader (FILE *outputFile, asm_t *myAsm)
 {
+    assert (myAsm);
+    assert (outputFile);
+
     int status = fprintf (outputFile, "%lu ", MY_ASM_VERSION);
     if (status < 0)
         return COMMON_ERROR_WRITE_TO_FILE;
@@ -534,6 +557,9 @@ int PrintHeader (FILE *outputFile, asm_t *myAsm)
 }
 int PrintBytecode (FILE *outputFile, asm_t *myAsm)
 {
+    assert(myAsm);
+    assert(outputFile);
+
     DEBUG_LOG("myAsm->instructionsCnt = %lu;\n", myAsm->instructionsCnt);
 
     for (size_t i = 0; i < myAsm->instructionsCnt; i++)
@@ -550,6 +576,8 @@ int PrintBytecode (FILE *outputFile, asm_t *myAsm)
 
 int PrintListingLine (asm_t *myAsm, size_t instructionStart)
 {
+    assert (myAsm);
+
     // TODO: add labels definitios to listring file
     int status = fprintf (myAsm->fileListing, "%04lu \t ", instructionStart);
     if (status < 0)
@@ -564,13 +592,12 @@ int PrintListingLine (asm_t *myAsm, size_t instructionStart)
         spaceAlign -= (size_t) status;
     }
 
-    DEBUG_LOG ("spaceAlign = %lu;", spaceAlign); 
-    // FIXME: printf("%20s")
+    DEBUG_LOG ("spaceAlign = %lu;", spaceAlign);
 
     status = PrintSymbols (myAsm->fileListing, spaceAlign, ' ');
     if (status != MY_ASM_OK)
         return status;
-    
+
     // NOTE: maybe better to pass here command_t and argument_t
     // but I do not think converting from int to register name, label and other types is worth it
     status = fprintf (myAsm->fileListing, "\t %s\n", 

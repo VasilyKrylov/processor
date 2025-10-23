@@ -22,7 +22,7 @@ struct asm_t
     size_t instructionsCnt = 0;
 
     char *fileName = NULL;
-    size_t lineNumber = 0; // FIXME: use this in code
+    size_t lineNumber = 0; 
 
     label_t labels[SPU_MAX_LABELS_COUNT] = {};
     size_t labelIdx = 0;

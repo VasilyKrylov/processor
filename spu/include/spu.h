@@ -9,7 +9,6 @@ const size_t SPU_VIDEO_WIDTH           = 50;
 const size_t SPU_VIDEO_HEIGHT          = 20;
 const size_t SPU_MAX_RAM_SIZE          = SPU_VIDEO_WIDTH * SPU_VIDEO_HEIGHT;
 
-
 enum spuErrors 
 {
     SPU_OK                  = 0,
@@ -59,7 +58,6 @@ enum runtimeErrors
     #define SPU_CTOR(spuName) SpuCtor (spuName);
     #define SPU_ERROR(spu) SPU_OK;
 #endif // PRINT_DEBUG
-
 struct spu_t
 {
     stack_t stack;
@@ -73,10 +71,14 @@ struct spu_t
 
     int ram[SPU_MAX_RAM_SIZE] = {0};
 
+    int(**spuActions)(spu_t *spu);
+
 #ifdef PRINT_DEBUG
     spuVarInfo_t varInfo = {};
 #endif // PRINT_DEBUG
 };
+
+typedef int(*spuFunction_t)(spu_t *spu);
 
 #ifdef PRINT_DEBUG
     #define SPU_VERIFY(stack) SpuVerify (stack);  

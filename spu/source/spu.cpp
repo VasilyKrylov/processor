@@ -16,7 +16,6 @@
 // FIXME  : use typedef
 //        : move to asm_t
 //        : use calloc 
-int (*spuActions[SPU_MAX_COMMAND_VALUE + 1]) (spu_t *spu) = {NULL};
 
 int SpuReadHeader   (spu_t *spu, char **buffer);
 int SpuReadBytecode (spu_t *spu, char **buffer);
@@ -38,9 +37,13 @@ int SpuCtor (spu_t *spu
     spu->bytecodeCnt = 0;
     spu->ip          = 0;
 
+    spu->spuActions = (spuFunction_t *)calloc (sizeof (spuFunction_t), 
+                                               SPU_MAX_COMMAND_VALUE + 1);
+
     for (size_t i = 0; i < commandFunctionsLen; i++)
     {
-        spuActions[commandFunctions[i].bytecode] = commandFunctions[i].spuFunction;
+        size_t idx = commandFunctions[i].bytecode;
+        spu->spuActions[idx] = commandFunctions[i].spuFunction;
     }
 
     return SPU_OK;
@@ -187,6 +190,9 @@ int SpuDtor (spu_t *spu)
 
     memset (spu->regs, 0, sizeof(spu->regs));
 
+    free (spu->spuActions);
+    spu->spuActions = NULL;
+    
     return COMMON_OK;
 }
 
@@ -210,7 +216,7 @@ int SpuRun (spu_t *spu)
         if (bytecode == SPU_HLT)
             return RE_OK;
 
-        int status = spuActions[bytecode](spu);
+        int status = spu->spuActions[bytecode](spu);
         if (status != RE_OK)
         {
             // RuntimePrintError (status); 

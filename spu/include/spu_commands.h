@@ -39,11 +39,8 @@ int DoDraw  (spu_t *spu);
 struct command_function 
 {
     commandsBytecode bytecode = SPU_EMPTY;
-    int (*spuFunction) (spu_t *spu) = NULL;
+    spuFunction_t spuFunction = NULL;
 };
-
-typedef int (*spuFunction)(spu_t *spu);
-
 
 // #define COMMAND_FUNCTION (commandName) {.bytecode = SPU_##commandName,
 //                                         .spuFunction = Do##commandName}
