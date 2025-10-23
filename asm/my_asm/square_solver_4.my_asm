@@ -26,11 +26,11 @@ POPR RDX    ; save D
 
 PUSHR RDX
 PUSH 0      ; D < 0
-JB :4       ; exit
+JB :4;      ;  exit
 
 PUSHR RDX
 PUSH 0      ; D == 0
-JE :5       ; one root
+JE :5;      ;  one root
 
 PUSHR RDX
 SQRT
@@ -70,11 +70,11 @@ HLT
 :0 ; linear equation, a = 0
     PUSHR RBX
     PUSH 0
-    JE :1           ; if b == 0
+    JE :1;           ; if b == 0
 
     PUSHR RCX
     PUSH 0
-    JE :3           ; if c == 0
+    JE :3;           ; if c == 0
 
     PUSHR RCX
     PUSH -1
@@ -95,7 +95,7 @@ HLT
     OUT
 RET
 
-:1              ; a = b = 0
+:1;              ; a = b = 0
     PUSHR RCX
     PUSH 0
     JE :2
@@ -105,13 +105,13 @@ RET
 
 HLT
 
-:2              ; a = b = c = 0
+:2;              ; a = b = c = 0
     PUSH 8
     OUT
 
 HLT
 
-:3      ; one root, x1 = 0
+:3;      ; one root, x1 = 0
     PUSH 1
     OUT
     PUSH 0

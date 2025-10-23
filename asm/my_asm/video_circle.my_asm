@@ -4,17 +4,17 @@ PUSH 0          ;RAX = 0
 POPR RAX
 
 :0
-    PUSHR RAX
+    PUSHR RAX       ; RAX = i
     PUSH 20
-    JAE : 9 ; RAX < 20
+    JAE : 9         ; RAX < 20
 
-    PUSH 0          ;RBX = 0
+    PUSH 0          ; RBX = 0
     POPR RBX
 
     :1
-        PUSHR RBX
+        PUSHR RBX   ; RBX = j
         PUSH 50
-        JAE :2     ;RBX < 50
+        JAE :2     ; RBX < 50
 
         CALL :8     ; push on stack ' ' or '*'
 
@@ -29,7 +29,7 @@ POPR RAX
         PUSHR RBX
         PUSH 1
         ADD
-        POPR RBX    ;RBX+=1
+        POPR RBX    ; RBX += 1
     JMP :1
 
     :2

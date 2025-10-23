@@ -7,6 +7,11 @@
 const int LABEL_DEFAULT_VALUE = -1;
 const int ARGUMENT_DEFAULT_VALUE = -1337;
 
+struct label_t
+{
+    unsigned long hash = 0;
+    ssize_t value      = 0;
+};
 struct asm_t
 {
     text_t text = {};
@@ -19,8 +24,9 @@ struct asm_t
     char *fileName = NULL;
     size_t lineNumber = 0; // FIXME: use this in code
 
-    ssize_t labels[10] = {};
-
+    label_t labels[SPU_MAX_LABELS_COUNT] = {};
+    size_t labelIdx = 0;
+    
     FILE *fileListing = NULL;
 };
 
@@ -56,7 +62,12 @@ enum argumentType
     MY_ASM_ARG_REGISTER         = 1 << 2,
     MY_ASM_ARG_REGISTER_ADDRESS = 1 << 3,
 
-    MY_ASM_ARG_UKNOWN   = 1 << 31
+    MY_ASM_ARG_UKNOWN           = 1 << 31
+};
+enum asmPass_t
+{
+    MY_ASM_FIRST_PASS = 1,
+    MY_ASM_FINAL_PASS = 2
 };
 
 #define SPU_COMMAND(commandName, argumentEnum) {.name = #commandName,           \
@@ -99,11 +110,12 @@ struct argument_t
     int value = ARGUMENT_DEFAULT_VALUE;
 };
 
-int AsmCtor (asm_t *myAsm);
-int AsmRead (asm_t *myAsm, char *inputFileName);
-int Assemble (asm_t *myAsm, size_t pass);
-int PrintBinary (const char *outputFileName, asm_t *myAsm);
-int AsmPrintError (int error);
-int AsmDtor (asm_t *myAsm);
+int AllocateBytecode            (asm_t *myAsm);
+int AsmCtor                     (asm_t *myAsm);
+int AsmRead                     (asm_t *myAsm, char *inputFileName);
+int Assemble                    (asm_t *myAsm);
+int PrintBinary                 (const char *outputFileName, asm_t *myAsm);
+int AsmPrintError               (int error);
+int AsmDtor                     (asm_t *myAsm);
 
 #endif // K_ASSEMBLER_H

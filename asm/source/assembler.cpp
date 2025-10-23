@@ -13,6 +13,9 @@
 
 int ResizeBytecode              (asm_t *myAsm);
 
+int AssembleFirst               (asm_t *myAsm);
+int AssembleFinal               (asm_t *myAsm);
+
 const command_t *FindCommand    (char **lineStart);
 
 int AssembleLine                (asm_t *myAsm, size_t strIdx, size_t pass);
@@ -22,7 +25,7 @@ int FindArgument                (asm_t *myAsm, argument_t *argument,
                                  char **lineStart);
 
 int AddLabel                    (asm_t *myAsm, char **lineStart);
-int CheckLabel                  (asm_t *myAsm, int labelIdx);
+int FindLabel                   (asm_t *myAsm, unsigned long hash);
                      
 // bool IsRegisterCommand          (int commandBytecode);
 
@@ -47,14 +50,16 @@ int AsmCtor (asm_t *myAsm)
     myAsm->bytecode = NULL;
 
     myAsm->ip = 0;
-    myAsm->instructionsCnt = 0;
+    myAsm->instructionsCnt = 16;
+    myAsm->bytecode = NULL;
 
     myAsm->fileName = NULL;
     myAsm->lineNumber = 0;
-
+    
     for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
     {
-        myAsm->labels[i] = -1;
+        myAsm->labels[i].value = -1;
+        myAsm->labels[i].hash  = 0;
     }
 
     myAsm->fileListing = fopen ("listing.txt", "w");
@@ -65,6 +70,7 @@ int AsmCtor (asm_t *myAsm)
         return MY_ASM_COMMON_ERROR | 
                COMMON_ERROR_OPENING_FILE;
     }
+
 
     return MY_ASM_OK;
 }
@@ -89,6 +95,19 @@ int AsmRead (asm_t *myAsm, char *inputFileName) // FIXME asserts
     
     StrReplace (myAsm->text.buffer, "\n;", '\0');
 
+    return MY_ASM_OK;
+}
+
+int AllocateBytecode (asm_t *myAsm)
+{
+    myAsm->bytecode = (int *) calloc (myAsm->instructionsCnt, sizeof(int));
+
+    if (myAsm->bytecode == NULL)
+    {
+        return MY_ASM_COMMON_ERROR |
+                COMMON_ERROR_ALLOCATING_MEMORY;
+    }
+    
     return MY_ASM_OK;
 }
 
@@ -119,7 +138,6 @@ int ResizeBytecode (asm_t *myAsm)
         ERROR ("Bytecode reallocated to %lu number of elemenets", myAsm->instructionsCnt);
     }
 
-
     return MY_ASM_OK;
 }
 
@@ -130,26 +148,35 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
     assert(lineStart);
     assert(*lineStart);
 
-    int labelIdx = -1337;
+    *lineStart = SkipSpaces(*lineStart);
 
-    int readedBytes = 0;
+    DEBUG_LOG ("*lineStart = \"%s\";", *lineStart);
 
-    int status = sscanf (*lineStart, ":%d %n", &labelIdx, &readedBytes);
-    *lineStart += readedBytes;
-    if (status == 1)
+    if (*lineStart[0] == ':')
     {
-        argument->type = MY_ASM_ARG_LABEL;
+        DEBUG_LOG ("%s", "Argument is label");
+        *lineStart += 1;
+        DEBUG_LOG ("*lineStart = \"%s\";", *lineStart);
 
-        int result = CheckLabel (myAsm, labelIdx);
-        argument->value =(int) myAsm->labels[labelIdx];
+        argument->type = MY_ASM_ARG_LABEL;
+        argument->value = -1;
+
+        unsigned long labelHash = HashDjb2 (*lineStart, ' ');
+        int idx = FindLabel (myAsm, labelHash);
         
-        if (result != MY_ASM_OK)
-            return result;
+        DEBUG_LOG ("hash: %lu;", labelHash);
+        DEBUG_LOG ("idx: %d;", idx);
+        
+        if (idx < 0) 
+            return MY_ASM_OK; // FIXME: not the best solution
+
+        argument->value =(int) myAsm->labels[idx].value;
 
         return MY_ASM_OK;
     }
 
-    status = sscanf (*lineStart, "%d %n", &argument->value, &readedBytes);
+    int readedBytes = 0;
+    int status = sscanf (*lineStart, "%d %n", &argument->value, &readedBytes);
     *lineStart += readedBytes;
     if (status == 1)
     {
@@ -204,11 +231,10 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
     myAsm->ip++;
     
     if (command->argType == MY_ASM_ARG_EMPTY)
-    {
         return MY_ASM_OK;
-    }
 
     argument_t argument = {};
+    DEBUG_LOG ("%s", "calls FindArgument()");
     status = FindArgument (myAsm, &argument, lineStart);
     if (status != MY_ASM_OK) 
     {
@@ -236,46 +262,76 @@ int AssembleCommand (asm_t *myAsm, const command_t *command,
     return MY_ASM_OK;
 }
 
+
 int AddLabel (asm_t *myAsm, char **lineStart)
 {
     assert (lineStart);
     assert (*lineStart);
 
-    int labelIdx = -1;
-    int readedBytes = 0;
-
-    int status = sscanf (*lineStart, ":%d %n", &labelIdx, &readedBytes);
-    *lineStart += readedBytes;
-    if (status != 1)
+    if (*lineStart[0] != ':')
     {
         ERROR_PRINT ("%s:%lu Error reading label", 
                      myAsm->fileName, myAsm->lineNumber);
 
         return MY_ASM_BAD_LABEL;
     }
+    *lineStart += 1;
+    DEBUG_LOG ("*lineStart = \"%s\";", *lineStart);
 
-    int result = CheckLabel (myAsm, labelIdx);
-    if (result != MY_ASM_OK)
-        return result;
-
-    DEBUG_PRINT ("%s", "Old value:\n");
-    DEBUG_PRINT ("myAsm->labels[%d] = %zd;\n", labelIdx, myAsm->labels[labelIdx]);
-
-    if (myAsm->labels[labelIdx] != LABEL_DEFAULT_VALUE &&
-        myAsm->labels[labelIdx] != (ssize_t)myAsm->ip)
+    if (myAsm->labelIdx >= SPU_MAX_LABELS_COUNT)
     {
-        ERROR_PRINT ("%s:%lu Double assigning label :%d; new label value = %lu", 
-                     myAsm->fileName, myAsm->lineNumber, labelIdx, myAsm->ip);
-
-        return MY_ASM_LABEL_DOUBLE_ASSIGNMENT;
-    }
+        ERROR_PRINT ("%s:%lu Error adding label, max number of labels is %lu",
+                     myAsm->fileName, myAsm->lineNumber, SPU_MAX_LABELS_COUNT);
     
-    myAsm->labels[labelIdx] = (ssize_t)myAsm->ip;
+        return MY_ASM_BAD_LABEL;
+    }
 
-    DEBUG_PRINT ("%s", "After assignment:\n");
-    DEBUG_PRINT ("myAsm->labels[%d] = %zd;\n", labelIdx, myAsm->labels[labelIdx]);
+    unsigned long labelHash = HashDjb2 (*lineStart, ' ');
+
+    DEBUG_LOG ("labelHash = %lu;", labelHash);
+
+    int idx = FindLabel (myAsm, labelHash);
+
+    if (idx >= 0)
+    {
+        // TODO: fix collision
+        myAsm->labels[idx].hash = labelHash;
+        myAsm->labels[idx].value = (ssize_t)myAsm->ip;
+    }
+    else
+    {
+        myAsm->labels[myAsm->labelIdx].hash = labelHash;
+        myAsm->labels[myAsm->labelIdx].value = (ssize_t)myAsm->ip;
+
+        myAsm->labelIdx++;
+    }
+
+    DEBUG_PRINT ("myAsm->labels[%lu]:\n", ARRAY_SIZE(myAsm->labels));
+    for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
+    {
+        DEBUG_PRINT ("\tmyAsm->labels[%lu].hash = %lu;\n", 
+                     i, myAsm->labels[i].hash);
+        DEBUG_PRINT ("\tmyAsm->labels[%lu].value = %zd;\n", 
+                     i, myAsm->labels[i].value);
+    }
 
     return MY_ASM_OK;
+}
+
+int FindLabel (asm_t *myAsm, unsigned long hash)
+{
+    int idx = -1;
+
+    for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
+    {
+        if (myAsm->labels[i].hash == hash)
+        {
+            idx = (int)i;
+            break;
+        }
+    }
+
+    return idx;
 }
 
 const command_t *FindCommand (char **lineStart)
@@ -323,6 +379,8 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     // TODO: new function TryFindLabel() (like FindCommand())
     if (lineStart[0] == ':')
     {
+        DEBUG_LOG ("%s", "calls AddLabel()");
+
         int status = AddLabel (myAsm, &lineStart);
 
         // FIXME: check for trash symbols
@@ -339,7 +397,7 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     }
     DEBUG_LOG ("command bytecode = %d;", command->bytecode);
 
-    if (pass == 1)
+    if (pass == MY_ASM_FIRST_PASS)
     {
         myAsm->ip += 1;
         myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY); 
@@ -363,40 +421,77 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     return MY_ASM_OK;
 }
 
-int Assemble (asm_t *myAsm, size_t pass)
+int Assemble (asm_t *myAsm)
+{
+    int status = AssembleFirst (myAsm);
+    if (status != 0)
+    {
+        ERROR ("%s", "Error in first assembling")
+
+        return status;
+    }
+
+    status = AllocateBytecode (myAsm);
+    if (status != 0)
+    {
+        ERROR ("%s", "Error in allocating bytecode")
+        
+        return status;
+    }
+
+    status = AssembleFinal (myAsm);
+    if (status != 0)
+    {
+        ERROR ("%s", "Error in second(final) assembling")
+        
+        return status;
+    }
+
+    return MY_ASM_OK;
+}
+
+int AssembleFirst (asm_t *myAsm)
 {
     assert (myAsm);
 
-    DEBUG_PRINT ("%s", "\n");
     DEBUG_PRINT ("%s", "==========================================================\n");
-    DEBUG_PRINT (      "                   ASSEMBLE - %lu PASS!\n                 \n", pass);
+    DEBUG_PRINT ("%s", "                   ASSEMBLE - FIRST PASS!                 \n");
     DEBUG_PRINT ("%s", "==========================================================\n");
-    DEBUG_PRINT ("%s", "\n");
-
-    myAsm->ip = 0;
-    if (pass == 2)
-    {
-        myAsm->bytecode = (int *) calloc (myAsm->instructionsCnt, sizeof(int));
-
-        if (myAsm->bytecode == NULL)
-            return MY_ASM_COMMON_ERROR |
-                   COMMON_ERROR_ALLOCATING_MEMORY;
-
-        DEBUG_LOG ("Allocated bytecode array on %lu elements", myAsm->instructionsCnt);
-    }
 
     for (size_t i = 0; myAsm->text.lines[i].start != 0; i++)
     {
-        int status = AssembleLine (myAsm, i, pass);
+        int status = AssembleLine (myAsm, i, MY_ASM_FIRST_PASS);
         if (status != MY_ASM_OK)
             return status;
     }
 
-    if (pass == 1)
-        myAsm->instructionsCnt += myAsm->ip + 1;
+    myAsm->instructionsCnt += myAsm->ip + 1;
 
     return MY_ASM_OK;
 }
+int AssembleFinal (asm_t *myAsm)
+{
+    assert (myAsm);
+
+    DEBUG_PRINT ("%s", "==========================================================\n");
+    DEBUG_PRINT ("%s", "                   ASSEMBLE - FINAL PASS!                 \n");
+    DEBUG_PRINT ("%s", "==========================================================\n");
+
+    myAsm->ip = 0;
+
+    DEBUG_LOG ("Allocated bytecode array on %lu elements", myAsm->instructionsCnt);
+
+    for (size_t i = 0; myAsm->text.lines[i].start != 0; i++)
+    {
+        int status = AssembleLine (myAsm, i, MY_ASM_FINAL_PASS);
+        if (status != MY_ASM_OK)
+            return status;
+    }
+
+    return MY_ASM_OK;
+}
+
+
 
 int PrintBinary (const char *outputFileName, asm_t *myAsm)
 {
@@ -469,7 +564,8 @@ int PrintListingLine (asm_t *myAsm, size_t instructionStart)
         spaceAlign -= (size_t) status;
     }
 
-    DEBUG_LOG ("spaceAlign = %lu;", spaceAlign);
+    DEBUG_LOG ("spaceAlign = %lu;", spaceAlign); 
+    // FIXME: printf("%20s")
 
     status = PrintSymbols (myAsm->fileListing, spaceAlign, ' ');
     if (status != MY_ASM_OK)
@@ -492,18 +588,6 @@ int PrintListingLine (asm_t *myAsm, size_t instructionStart)
 //     return (commandBytecode & registerBit);
 // }
 
-int CheckLabel (asm_t *myAsm, int labelIdx)
-{
-    if (labelIdx < 0 || (size_t)labelIdx > ARRAY_SIZE (myAsm->labels)) 
-    {
-        ERROR_PRINT ("%s:%lu Bad label name, only [0-9] allowed, but you typed %d",
-                     myAsm->fileName, myAsm->lineNumber, labelIdx);
-
-        return MY_ASM_BAD_LABEL;
-    }
-
-    return MY_ASM_OK;
-}
 
 // Yes, you can't do [ RAX ], only [RAX]
 int GetRegisterAddressBytecode (char *registerName, int *readedBytes, int *bytecode)
@@ -568,11 +652,8 @@ int AsmDtor (asm_t *myAsm)
 {
     TextDtor (&(myAsm->text));
 
-    if (myAsm->bytecode != NULL)
-    {
-        free (myAsm->bytecode);
-        myAsm->bytecode = NULL;
-    }
+    free (myAsm->bytecode);
+    myAsm->bytecode = NULL;
 
     myAsm->instructionsCnt = 0;
 
@@ -581,7 +662,7 @@ int AsmDtor (asm_t *myAsm)
 
     for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
     {
-        myAsm->labels[i] = 0;
+        myAsm->labels[i].value = 0;
     }
 
     fclose (myAsm->fileListing);

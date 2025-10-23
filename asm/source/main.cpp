@@ -14,7 +14,7 @@ int main (int argc, char **argv)
     {
         printf ("Run program like this: %s file.my_asm\n", argv[0]);
 
-        return 7;
+        return 1;
     }
 
     asm_t myAsm = {};
@@ -29,28 +29,10 @@ int main (int argc, char **argv)
         return status;
     }
 
-    /* 
-    1 проход:
-        не аллоцируем массив байткода, просто считаем myAsm-> ip
-        заполняем массив меток
-    
-    2 проход:
-        аллоцируем массив байткода на посчитанное значение из первого прохода
-        проверяем, что все метки, на которые выполняется прыжок не 0
-    */
-    status  = Assemble (&myAsm, 1);
+    status = Assemble (&myAsm);
     if (status != 0)
     {
-        ERROR ("%s", "Error while first assembling")
-        AsmDtor (&myAsm);
-        
-        return status;
-    }
-
-    status  = Assemble (&myAsm, 2);
-    if (status != 0)
-    {
-        ERROR ("%s", "Error while second(final) assembling")
+        ERROR ("%s", "Error in assembling")
         AsmDtor (&myAsm);
         
         return status;
