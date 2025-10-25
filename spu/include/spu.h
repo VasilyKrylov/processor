@@ -78,7 +78,7 @@ struct spu_t
 #endif // PRINT_DEBUG
 };
 
-typedef int(*spuFunction_t)(spu_t *spu);
+typedef int(*spuAction_t)(spu_t *spu);
 
 #ifdef PRINT_DEBUG
     #define SPU_VERIFY(stack) SpuVerify (stack);  

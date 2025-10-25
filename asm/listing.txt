@@ -1,66 +1,8 @@
-0000 	   21      	 DRAW
-0001 	    1    0 	 PUSH 0
-0003 	   42    3 	 POPR RDX
-0005 	   35    3 	     PUSHR RDX
-0007 	    1   28 	     PUSH 28
-0009 	   14  113 	     JAE :5
-0011 	    1    0 	     PUSH 0          
-0013 	   42    0 	     POPR RAX
-0015 	   35    0 	         PUSHR RAX
-0017 	    1   20 	         PUSH 20
-0019 	   14   -1 	         JAE : 9 
-0021 	    1    0 	         PUSH 0          
-0023 	   42    1 	         POPR RBX
-0025 	   35    1 	             PUSHR RBX
-0027 	    1   50 	             PUSH 50
-0029 	   14   54 	             JAE :2     
-0031 	   17   73 	             CALL :8     
-0033 	   35    0 	             PUSHR RAX
-0035 	    1   50 	             PUSH 50
-0037 	    6      	             MUL
-0038 	   35    1 	             PUSHR RBX
-0040 	    3      	             ADD
-0041 	   42    2 	             POPR RCX
-0043 	   20    2 	             POPM [RCX]  
-0045 	   35    1 	             PUSHR RBX
-0047 	    1    1 	             PUSH 1
-0049 	    3      	             ADD
-0050 	   42    1 	             POPR RBX    
-0052 	   10   25 	         JMP :1
-0054 	   35    0 	         PUSHR RAX
-0056 	    1    1 	         PUSH 1
-0058 	    3      	         ADD
-0059 	   42    0 	         POPR RAX    
-0061 	   10   15 	     JMP :0
-0063 	   21      	         DRAW
-0064 	   35    3 	         PUSHR RDX
-0066 	    1    1 	         PUSH 1
-0068 	    3      	         ADD
-0069 	   42    3 	         POPR RDX
-0071 	   10    5 	 JMP :3
-0073 	   35    0 	         PUSHR RAX
-0075 	    1    9 	         PUSH 9
-0077 	    4      	         SUB
-0078 	   35    0 	         PUSHR RAX
-0080 	    1    9 	         PUSH 9
-0082 	    4      	         SUB
-0083 	    6      	         MUL    
-0084 	   35    1 	         PUSHR RBX
-0086 	    1   25 	         PUSH 25
-0088 	    4      	         SUB
-0089 	   35    1 	         PUSHR RBX
-0091 	    1   25 	         PUSH 25
-0093 	    4      	         SUB
-0094 	    6      	         MUL    
-0095 	    3      	         ADD
-0096 	   42    2 	         POPR RCX
-0098 	   35    2 	         PUSHR RCX
-0100 	   35    3 	         PUSHR RDX
-0102 	   35    3 	         PUSHR RDX  
-0104 	    6      	         MUL         
-0105 	   12  110 	         JBE :7
-0107 	    1   46 	         PUSH 46 
-0109 	   18      	     RET
-0110 	    1   64 	         PUSH 64 
-0112 	   18      	     RET
-0113 	   -1      	 HLT
+0000 	   17    3 	 CALL :0123456789
+0002 	   -1      	 HLT
+0003 	    1   10 	 PUSH 10
+0005 	    1   20 	 PUSH 20
+0007 	    3      	 ADD
+0008 	    8      	 OUT
+0009 	   18      	 RET
+0010 	   -1      	 HLT

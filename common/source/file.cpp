@@ -20,7 +20,7 @@ void PrintContent (char *content)
     }
 }
 
-void PrintLinesArray (line *linesArray)
+void PrintLinesArray (line_t *linesArray)
 {
     DEBUG_PRINT ("%s", "\nlinesArray:\n");
     for (size_t i = 0; linesArray[i].start != NULL; i++)
@@ -109,12 +109,12 @@ ssize_t GetFileSize (char *fileName)
 
 // innitializing linesArray array
 // return number of initialized pointers
-line *MakePointers (char *buffer, char lineSeparator)
+line_t *MakePointers (char *buffer, char lineSeparator)
 {
     assert (buffer);
 
     size_t curIdx = 0;
-    line *linesArray = (line *) calloc (CountLines (buffer, lineSeparator) + 1, sizeof(line));
+    line_t *linesArray = (line_t *) calloc (CountLines (buffer, lineSeparator) + 1, sizeof(line_t));
     
     if (linesArray == NULL) 
     {
@@ -134,7 +134,7 @@ line *MakePointers (char *buffer, char lineSeparator)
             }
             else
             {
-                const line prev = linesArray[curIdx - 1];
+                const line_t prev = linesArray[curIdx - 1];
                 linesArray[curIdx].len = size_t (&buffer[i] - (prev.start + prev.len) + 1);
             }
 

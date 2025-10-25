@@ -19,7 +19,7 @@ void StrReplace         (char *s, const char *oldValues, const char newValue);
 size_t GetWordLen       (char *s, const char *delimiters);
 char *SkipSpaces        (char *s);
 int PrintSymbols        (FILE *outputFile, size_t cnt, char c);
-unsigned long HashDjb2  (char *str, char delimiter);
+unsigned long HashDjb2  (char *str);
 
 #define MAX(x,y)  ( (x) > (y) ? (x) : (y) )
 #define MIN(x,y)  ( (x) < (y) ? (x) : (y) )

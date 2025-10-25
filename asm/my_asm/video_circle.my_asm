@@ -65,15 +65,11 @@ HLT
 
     POPR RCX
     PUSHR RCX
-    OUT
-    PUSHR RCX
 
     PUSH 9  ; = r^2
 
     JBE :7
 
-    PUSH 666
-    OUT
 
     PUSH 46 ; = '.'
 RET

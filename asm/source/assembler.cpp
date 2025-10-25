@@ -25,7 +25,7 @@ int FindArgument                (asm_t *myAsm, argument_t *argument,
                                  char **lineStart);
 
 int AddLabel                    (asm_t *myAsm, char **lineStart);
-int FindLabel                   (asm_t *myAsm, unsigned long hash);
+int FindLabel                   (asm_t *myAsm, char *name, unsigned long hash);
                      
 // bool IsRegisterCommand          (int commandBytecode);
 
@@ -36,6 +36,8 @@ int PrintHeader                 (FILE *outputFile, asm_t *myAsm);
 int PrintBytecode               (FILE *outputFile, asm_t *myAsm);
 
 int PrintListingLine            (asm_t *myAsm, size_t instructionStart);
+
+int CheckTrash                  (asm_t *myAsm, char *linePtr);
 
 int AsmCtor (asm_t *myAsm)
 {
@@ -154,35 +156,51 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
     assert(lineStart);
     assert(*lineStart);
 
-    *lineStart = SkipSpaces(*lineStart);
+    *lineStart = SkipSpaces (*lineStart);
 
     DEBUG_LOG ("*lineStart = \"%s\";", *lineStart);
 
-    if (*lineStart[0] == ':')
+    if ((*lineStart)[0] == ':')
     {
         DEBUG_LOG ("%s", "Argument is label");
         *lineStart += 1;
         DEBUG_LOG ("*lineStart = \"%s\";", *lineStart);
 
-        argument->type = MY_ASM_ARG_LABEL;
+        argument->type  = MY_ASM_ARG_LABEL;
         argument->value = -1;
 
-        unsigned long labelHash = HashDjb2 (*lineStart, ' ');
-        int idx = FindLabel (myAsm, labelHash);
+// NOTE: this code(shit) needs to be reviewed
+        size_t wordLen = GetWordLen (*lineStart, " ");
+        (*lineStart)[wordLen] = '\0';
+        char *labelName = *lineStart;
+        DEBUG_LOG ("labelName = \"%s\";", labelName);
+        *lineStart += wordLen;
+
+        unsigned long labelHash = HashDjb2 (labelName);
+        int idx = FindLabel (myAsm, labelName, labelHash);
         
-        DEBUG_LOG ("hash: %lu;", labelHash);
-        DEBUG_LOG ("idx: %d;", idx);
+        DEBUG_LOG ("%s", "label:\n");
+        DEBUG_LOG ("\t name: %s;", labelName);
+        DEBUG_LOG ("\t hash: %lu;", labelHash);
+        DEBUG_LOG ("\t idx: %d;", idx);
         
         if (idx < 0) 
-            return MY_ASM_OK; // FIXME: not the best solution
+        {
+            ERROR_PRINT ("%s:%lu Error using not declarated label \":%*s\"",
+                         myAsm->fileName, myAsm->lineNumber, 
+                         (int)wordLen, labelName);
 
-        argument->value =(int) myAsm->labels[idx].value;
+            return MY_ASM_BAD_LABEL;
+        }
+
+        argument->value = (int)myAsm->labels[idx].value;
 
         return MY_ASM_OK;
     }
 
     int readedBytes = 0;
-    int status = sscanf (*lineStart, "%d %n", &argument->value, &readedBytes);
+    // NOTE: tmp.cpp and man 3 /space
+    int status = sscanf (*lineStart, "%d%n", &argument->value, &readedBytes);
     *lineStart += readedBytes;
     if (status == 1)
     {
@@ -275,7 +293,7 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     assert (lineStart);
     assert (*lineStart);
 
-    if (*lineStart[0] != ':')
+    if ((*lineStart)[0] != ':')
     {
         ERROR_PRINT ("%s:%lu Error reading label", 
                      myAsm->fileName, myAsm->lineNumber);
@@ -296,22 +314,40 @@ int AddLabel (asm_t *myAsm, char **lineStart)
         return MY_ASM_BAD_LABEL;
     }
 
-    unsigned long labelHash = HashDjb2 (*lineStart, ' ');
+    size_t wordLen = GetWordLen (*lineStart, " ");
+    DEBUG_LOG ("wordLen = %lu;", wordLen);
 
+    (*lineStart)[wordLen] = '\0';
+    char *labelName = *lineStart;
+    DEBUG_LOG ("labelName = \"%s\";", labelName);
+    *lineStart += wordLen;  
+    // Looks like shit tbh.
+    // I want to rewrite entire assembler and make some kind of tokenizator.
+    // Again...
+
+    unsigned long labelHash = HashDjb2 (labelName);
     DEBUG_LOG ("labelHash = %lu;", labelHash);
 
-    int idx = FindLabel (myAsm, labelHash);
+    int idx = FindLabel (myAsm, labelName, labelHash);
 
     if (idx >= 0)
     {
-        // TODO: fix collision
+        DEBUG_LOG ("%s", "idx >= 0");
+        myAsm->labels[idx].name = (labelName);
         myAsm->labels[idx].hash = labelHash;
         myAsm->labels[idx].value = (ssize_t)myAsm->ip;
+     
+        DEBUG_LOG ("myAsm->labels[idx].name = \"%s\";", myAsm->labels[idx].name);
     }
     else
     {
+        DEBUG_LOG ("%s", "idx < 0");
+        myAsm->labels[myAsm->labelIdx].name = (labelName);
         myAsm->labels[myAsm->labelIdx].hash = labelHash;
         myAsm->labels[myAsm->labelIdx].value = (ssize_t)myAsm->ip;
+     
+        DEBUG_LOG ("myAsm->labels[myAsm->labelIdx].name = \"%s\";", 
+                    myAsm->labels[myAsm->labelIdx].name);
 
         myAsm->labelIdx++;
     }
@@ -319,6 +355,8 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     DEBUG_PRINT ("myAsm->labels[%lu]:\n", ARRAY_SIZE(myAsm->labels));
     for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
     {
+        DEBUG_PRINT ("\tmyAsm->labels[%lu].name = \"%s\";\n", 
+                     i, myAsm->labels[i].name);
         DEBUG_PRINT ("\tmyAsm->labels[%lu].hash = %lu;\n", 
                      i, myAsm->labels[i].hash);
         DEBUG_PRINT ("\tmyAsm->labels[%lu].value = %zd;\n", 
@@ -328,15 +366,17 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     return MY_ASM_OK;
 }
 
-int FindLabel (asm_t *myAsm, unsigned long hash)
+int FindLabel (asm_t *myAsm, char *name, unsigned long hash)
 {
     assert (myAsm);
+    assert (name);
 
     int idx = -1;
 
     for (size_t i = 0; i < ARRAY_SIZE (myAsm->labels); i++)
     {
-        if (myAsm->labels[i].hash == hash)
+        if (myAsm->labels[i].hash == hash &&
+            strcmp (myAsm->labels[i].name, name) == 0)
         {
             idx = (int)i;
             break;
@@ -399,8 +439,10 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
         DEBUG_LOG ("%s", "calls AddLabel()");
 
         int status = AddLabel (myAsm, &lineStart);
+        if (status != MY_ASM_OK)
+            return status;
 
-        // FIXME: check for trash symbols
+        status = CheckTrash (myAsm, lineStart);
 
         return status;
     }
@@ -417,7 +459,7 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     if (pass == MY_ASM_FIRST_PASS)
     {
         myAsm->ip += 1;
-        myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY); 
+        myAsm->ip += (command->argType != MY_ASM_ARG_EMPTY);
         // maybe not the best solution, but it works
         
         return MY_ASM_OK;
@@ -426,14 +468,16 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     const size_t instructionStart = myAsm->ip;
 
     int status = AssembleCommand (myAsm, command, &lineStart);
-    if (status != MY_ASM_OK) 
+    if (status != MY_ASM_OK)
         return status;
     
-    status = PrintListingLine (myAsm, instructionStart);
+    status = CheckTrash (myAsm, lineStart);
     if (status != MY_ASM_OK)
         return status;
 
-    // FIXME: CheckTrash();
+    status = PrintListingLine (myAsm, instructionStart);
+    if (status != MY_ASM_OK)
+        return status;
 
     return MY_ASM_OK;
 }
@@ -508,7 +552,29 @@ int AssembleFinal (asm_t *myAsm)
     return MY_ASM_OK;
 }
 
+int CheckTrash (asm_t *myAsm, char *linePtr)
+{
+    line_t line = myAsm->text.lines[myAsm->lineNumber - 1];
 
+    DEBUG_LOG ("%s", "CheckTrash()");
+
+    while (linePtr != line.start + line.len)
+    {
+        DEBUG_LOG ("%c", *linePtr);
+
+        if (*linePtr != ' ' && *linePtr != '\0')
+        {
+            ERROR_PRINT ("%s:%lu ERROR - trash symbols in the end of line \"%s\"",
+                         myAsm->fileName, myAsm->lineNumber, linePtr);
+
+            return MY_ASM_TRASH_SYMBOLS;
+        }
+
+        linePtr++;
+    }
+    
+    return MY_ASM_OK;
+}
 
 int PrintBinary (const char *outputFileName, asm_t *myAsm)
 {
@@ -607,13 +673,6 @@ int PrintListingLine (asm_t *myAsm, size_t instructionStart)
 
     return MY_ASM_OK;
 }
-
-// bool IsRegisterCommand (int commandBytecode)
-// {
-//     const int registerBit = 1 << SHIFT_REGISTER;
-
-//     return (commandBytecode & registerBit);
-// }
 
 
 // Yes, you can't do [ RAX ], only [RAX]

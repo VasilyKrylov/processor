@@ -1,11 +1,11 @@
 DRAW
 
-PUSH 0
+PUSH 24
 POPR RDX
 
 :3
     PUSHR RDX
-    PUSH 13
+    PUSH 28
     JAE :5
 
     PUSH 0          ;RAX = 0
@@ -14,7 +14,7 @@ POPR RDX
     :0
         PUSHR RAX
         PUSH 20
-        JAE :9 ; RAX < 20
+        JAE : 9 ; RAX < 20
 
         PUSH 0          ;RBX = 0
         POPR RBX
@@ -58,16 +58,12 @@ JMP :3
 
     :8
         PUSHR RAX
-        PUSH 2
-        MUL
-        PUSH 13
+        PUSH 9
         SUB
         PUSHR RAX
-        PUSH 2
-        MUL
-        PUSH 13
+        PUSH 9
         SUB
-        MUL    ; (RAX - 13) ^ 2
+        MUL    ; (RAX - 9) ^ 2
 
 
         PUSHR RBX

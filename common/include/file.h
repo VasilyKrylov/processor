@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 
-struct line 
+struct line_t 
 {
     char *start = NULL;
     size_t len = 0;
@@ -14,12 +14,12 @@ struct text_t
     char *buffer = NULL;
     size_t bufferLen = 0;
 
-    line *lines = NULL;
+    line_t *lines = NULL;
 };
 
 #ifdef PRINT_DEBUG // TODO: while(0)
     void PrintContent (char *content);
-    void PrintLinesArray (line *linesArray);
+    void PrintLinesArray (line_t *linesArray);
 
     #define PRINT_CONTENT(content) PrintContent (content);
     #define PRINT_LINES_ARRAY(linesArray) PrintLinesArray (linesArray);
@@ -29,7 +29,7 @@ struct text_t
 #endif // PRINT_DEBUG
 
 char *ReadFile (char *inputFileName, size_t *bufferLen);
-line *MakePointers (char *buffer, char lineSeparator);
+line_t *MakePointers (char *buffer, char lineSeparator);
 ssize_t GetFileSize (char *fileName);
 
 size_t CountLines (char *content, char lineSeparator);

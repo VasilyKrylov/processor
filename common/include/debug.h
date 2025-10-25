@@ -12,7 +12,7 @@
 #define BLUE_BOLD_COLOR     "\33[1;34m" 
 #define COLOR_END           "\33[0m" // To flush out prev colors
 
-#define ERROR(format, ...)       fprintf(stderr, RED_BOLD_COLOR "[ERROR] %s:%d:%s: " format "\n" COLOR_END, __FILE__, __LINE__, __func__, __VA_ARGS__); // NOTE: rename to ERROR_LOG, but it is too late...
+#define ERROR(format, ...)       fprintf(stderr, RED_BOLD_COLOR "[ERROR] %s:%d:%s(): " format "\n" COLOR_END, __FILE__, __LINE__, __func__, __VA_ARGS__); // NOTE: rename to ERROR_LOG, but it is too late...
 #define ERROR_PRINT(format, ...) fprintf(stderr, RED_BOLD_COLOR format "\n" COLOR_END, __VA_ARGS__)
 
 enum common_errors

@@ -275,6 +275,14 @@ int DoJmp (spu_t *spu)
         
         return RE_JMP_ARGUMENT_IS_NEGATIVE;
     }
+    if ((size_t) spu->bytecode[spu->ip] >= spu->bytecodeCnt)
+    {
+        ERROR_PRINT ("JMP argument is grater than bytecode size (%d >= %lu)", 
+                     spu->bytecode[spu->ip], spu->bytecodeCnt);
+        
+        return RE_JMP_ARGUMENT_IS_NEGATIVE;
+    }
+    // FIXME: spu->bytecode[spu->ip] больше размера байткода!!!!!!!!!!!!!!
 
     spu->ip = (size_t) spu->bytecode[spu->ip];
     
@@ -341,6 +349,13 @@ int DoCall (spu_t *spu)
         ERROR_PRINT ("CALL argument is less than zero - %d", spu->bytecode[spu->ip]);
         
         return RE_CALL_ARGUMENT_IS_NEGATIVE;
+    }
+    if ((size_t) spu->bytecode[spu->ip] >= spu->bytecodeCnt)
+    {
+        ERROR_PRINT ("CALL argument is grater than bytecode size (%d >= %lu)", 
+                     spu->bytecode[spu->ip], spu->bytecodeCnt);
+        
+        return RE_JMP_ARGUMENT_IS_NEGATIVE;
     }
 
     int status = StackPush (&spu->stackReturn, (int)spu->ip + 1);

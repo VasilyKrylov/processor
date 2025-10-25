@@ -56,7 +56,8 @@ void StrReplace (char *s, const char *oldValues, const char newValue)
 
 size_t GetWordLen (char *s, const char *delimiters)
 {
-    assert(s); // NOTE: maybe make delimiters global variable(?)
+    assert (s); 
+    assert (delimiters); 
 
     return strcspn (s, delimiters);
 }
@@ -84,19 +85,25 @@ int PrintSymbols (FILE *outputFile, size_t cnt, char c)
     return COMMON_OK;
 }
 
-unsigned long HashDjb2 (char *str, char delimiter) 
+unsigned long HashDjb2 (char *str) 
 {
     unsigned long hash = 5381;
-    int c = 'a';
+    int c = '\1';
 
     DEBUG_LOG("*str = \"%s\";", str);
 
-    while ((c != '\0') && (c != delimiter))
+    
+    // for (size_t i = 0; i < len; i++)
+    // {
+    //     hash = ((hash << 5) + hash) + (unsigned long)str[i];
+        
+    //     DEBUG_LOG ("%c\t%d", c, c);
+    // }
+
+    while (c != '\0')
     {
         hash = ((hash << 5) + hash) + (unsigned long)c;
         c = *(str++);
-
-        DEBUG_LOG ("%c\t%d", c, c);
     }
 
     return hash;

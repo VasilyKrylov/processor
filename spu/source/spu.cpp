@@ -37,7 +37,7 @@ int SpuCtor (spu_t *spu
     spu->bytecodeCnt = 0;
     spu->ip          = 0;
 
-    spu->spuActions = (spuFunction_t *)calloc (sizeof (spuFunction_t), 
+    spu->spuActions = (spuAction_t *)calloc (sizeof (spuAction_t *), 
                                                SPU_MAX_COMMAND_VALUE + 1);
 
     for (size_t i = 0; i < commandFunctionsLen; i++)
@@ -215,8 +215,16 @@ int SpuRun (spu_t *spu)
 
         if (bytecode == SPU_HLT)
             return RE_OK;
+        
+        spuAction_t spuAction = spu->spuActions[bytecode];
+        if (spuAction == NULL)
+        {
+            ERROR ("Uknown command in bytecode: %d", spu->bytecode[spu->ip])
 
-        int status = spu->spuActions[bytecode](spu);
+            return RE_UKNOWN_BYTECODE;
+        }
+
+        int status = spuAction(spu);
         if (status != RE_OK)
         {
             // RuntimePrintError (status); 

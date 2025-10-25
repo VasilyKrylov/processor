@@ -11,6 +11,7 @@ struct label_t
 {
     unsigned long hash = 0;
     ssize_t value      = 0;
+    char *name         = NULL;
 };
 struct asm_t
 {
@@ -74,6 +75,8 @@ enum asmPass_t
                                                 .bytecode =  SPU_##commandName, \
                                                 .argType = argumentEnum,        \
                                                 .nameLen = sizeof(#commandName)}
+
+
 const command_t commands[] = 
 {
     SPU_COMMAND (PUSH,  MY_ASM_ARG_NUMBER           ),
