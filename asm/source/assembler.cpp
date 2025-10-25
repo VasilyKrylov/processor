@@ -174,7 +174,8 @@ int FindArgument (asm_t *myAsm, argument_t *argument,
         (*lineStart)[wordLen] = '\0';
         char *labelName = *lineStart;
         DEBUG_LOG ("labelName = \"%s\";", labelName);
-        *lineStart += wordLen;
+        *lineStart += wordLen + 1;
+
 
         unsigned long labelHash = HashDjb2 (labelName);
         int idx = FindLabel (myAsm, labelName, labelHash);
@@ -401,7 +402,7 @@ const command_t *FindCommand (char **lineStart)
 
         if (strncmp (*lineStart, commands[i].name, wordLen) == 0)
         {
-            *lineStart += commands[i].nameLen;
+            *lineStart += wordLen + 1;
 
             return &(commands[i]);
         }
@@ -455,6 +456,7 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
         return MY_ASM_UKNOWN_COMMAND;
     }
     DEBUG_LOG ("command bytecode = %d;", command->bytecode);
+    DEBUG_LOG ("lineStart = \"%s\";", lineStart);
 
     if (pass == MY_ASM_FIRST_PASS)
     {
@@ -557,12 +559,14 @@ int CheckTrash (asm_t *myAsm, char *linePtr)
     line_t line = myAsm->text.lines[myAsm->lineNumber - 1];
 
     DEBUG_LOG ("%s", "CheckTrash()");
+    DEBUG_LOG ("linePtr = \"%s\";", linePtr);
 
-    while (linePtr != line.start + line.len)
+    // while (linePtr < line.start + line.len)
+    while (*linePtr != '\0' && linePtr < line.start + line.len)
     {
-        DEBUG_LOG ("%c", *linePtr);
+        DEBUG_LOG ("\'%c\' - %d", *linePtr, *linePtr);
 
-        if (*linePtr != ' ' && *linePtr != '\0')
+        if (*linePtr != ' ')
         {
             ERROR_PRINT ("%s:%lu ERROR - trash symbols in the end of line \"%s\"",
                          myAsm->fileName, myAsm->lineNumber, linePtr);
