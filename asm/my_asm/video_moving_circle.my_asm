@@ -58,16 +58,12 @@ JMP :3
 
     :8
         PUSHR RAX
-        PUSH 2
-        MUL
-        PUSH 13
+        PUSH 10
         SUB
         PUSHR RAX
-        PUSH 2
-        MUL
-        PUSH 13
+        PUSH 10
         SUB
-        MUL    ; (RAX - 13) ^ 2
+        MUL    ; (RAX - 10) ^ 2
 
 
         PUSHR RBX
@@ -78,7 +74,7 @@ JMP :3
         SUB
         MUL    ; (RBX - 25) ^ 2
 
-        ADD
+        ADD    ; (RAX - 10) ^ 2 + (RBX - 25) ^ 2
 
         POPR RCX
         PUSHR RCX

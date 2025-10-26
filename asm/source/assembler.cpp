@@ -712,7 +712,7 @@ int GetRegisterBytecode (char *registerName, int *readedBytes, int *bytecode)
     if ((size_t)registerIdx >= NUMBER_OF_REGISTERS) return MY_ASM_INVALID_REGISTER_NAME;
 
     *bytecode = registerIdx;
-    *readedBytes = REGISTER_NAME_LEN;
+    *readedBytes = REGISTER_NAME_LEN + 2;
 
     return MY_ASM_OK;
 }

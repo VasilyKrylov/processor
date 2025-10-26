@@ -6,7 +6,7 @@ POPR RAX
 :0
     PUSHR RAX       ; RAX = i
     PUSH 20
-    JAE : 9         ; RAX < 20
+    JAE :9          ; RAX < 20
 
     PUSH 0          ; RBX = 0
     POPR RBX
@@ -44,32 +44,32 @@ JMP :0
 HLT
 
 :8
+    PUSHR RAX   
+    PUSH 10
+    SUB         ; y = RAX - 10
     PUSHR RAX
-    PUSH 9
-    SUB
-    PUSHR RAX
-    PUSH 9
-    SUB
-    MUL    ; (RAX - 9) ^ 2
+    PUSH 10
+    SUB         ; y = RAX - 10
+    MUL         ; (y) ^ 2
 
 
+    PUSHR RBX   
+    PUSH 25
+    SUB         ; x = RBX - 25
+    PUSH 2
+    DIV         ; x /= 2
     PUSHR RBX
     PUSH 25
-    SUB
-    PUSHR RBX
-    PUSH 25
-    SUB
-    MUL    ; (RBX - 25) ^ 2
+    SUB         ; x = RBX - 25
+    PUSH 2
+    DIV         ; x /= 2
+    MUL         ; (x) ^ 2
 
-    ADD
-
-    POPR RCX
-    PUSHR RCX
+    ADD    ; (y) ^ 2 + (x) ^ 2
 
     PUSH 9  ; = r^2
 
     JBE :7
-
 
     PUSH 46 ; = '.'
 RET
