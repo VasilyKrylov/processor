@@ -1,11 +1,13 @@
-asm/*.o
-spu/*.o
-
 asm/asm
 spu/spu
 
 asm/tmp*
 spu/tmp*
+
+asm/my_asm/lang_auto_compiled.my_asm
+asm/listing.txt
+
+spu/spu/*.out
 
 tmp* 
 .out

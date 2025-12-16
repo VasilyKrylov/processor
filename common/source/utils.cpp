@@ -56,6 +56,7 @@ void StrReplace (char *s, const char *oldValues, const char newValue)
 
 size_t GetWordLen (char *s, const char *delimiters)
 {
+    // FIXME: remove this function and make constant delimetersWord
     assert (s); 
     assert (delimiters); 
 

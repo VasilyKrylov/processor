@@ -37,8 +37,8 @@ int SpuCtor (spu_t *spu
     spu->bytecodeCnt = 0;
     spu->ip          = 0;
 
-    spu->spuActions = (spuAction_t *)calloc (sizeof (spuAction_t *), 
-                                               SPU_MAX_COMMAND_VALUE + 1);
+    spu->spuActions = (spuAction_t *) calloc (SPU_MAX_COMMAND_VALUE + 1,
+                                              sizeof (spuAction_t *));
 
     for (size_t i = 0; i < commandFunctionsLen; i++)
     {
@@ -300,7 +300,8 @@ void SpuDump (spu_t *spu, const char *comment,
         else
             printf ("%s %04d %s | ", YELLOW_COLOR, spu->bytecode[i], COLOR_END); 
     }
-
+    printf("%s", "\n\t}\n");
+    
     // printf("\n\tram[%lu]   \t = [%p]\n", SPU_MAX_RAM_SIZE, spu->ram);
     // printf("%s", "\t{");
     // for (size_t i = 0; i < SPU_VIDEO_HEIGHT; i++)
@@ -309,11 +310,32 @@ void SpuDump (spu_t *spu, const char *comment,
 
     //     for (size_t j = 0; j < SPU_VIDEO_WIDTH; j++)
     //     {            
-    //         printf ("%s %04d %s|", BLUE_COLOR, spu->ram[i], COLOR_END); 
+    //         printf ("%s %04d %s|", BLUE_COLOR, spu->ram[i * SPU_VIDEO_WIDTH + j], COLOR_END); 
     //     }
         
     // }
     // printf("%s", "\n\t}\n");
+
+    const size_t kMaxSupposedVariablesNumber = 10;
+
+    printf("\tram[%lu]   \t = [%p]\n", SPU_MAX_RAM_SIZE, spu->ram);
+    printf("%s", "\t{\n\t\t\t");
+    
+    for (size_t i = 0; i < kMaxSupposedVariablesNumber; i++)
+        printf ("[%04lu] | ", i);
+
+    for (size_t i = 0; i < 1; i++)
+    {
+        printf ("\n\t\t[%04lu]: ", i);
+
+        for (size_t j = 0; j < kMaxSupposedVariablesNumber; j++)
+        {            
+            printf ("%s %04d %s | ", BLUE_COLOR, spu->ram[i * SPU_VIDEO_WIDTH + j], COLOR_END); 
+        }
+        printf ("...");
+    }
+    printf("%s", "\n\t}\n");
+
 
     printf("%s", "}\n");
     

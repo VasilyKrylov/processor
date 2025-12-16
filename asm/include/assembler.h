@@ -76,7 +76,6 @@ enum asmPass_t
                                                 .argType = argumentEnum,        \
                                                 .nameLen = sizeof(#commandName)}
 
-
 const command_t commands[] = 
 {
     SPU_COMMAND (PUSH,  MY_ASM_ARG_NUMBER           ),

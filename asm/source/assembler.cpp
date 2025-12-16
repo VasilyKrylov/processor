@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "assembler.h"
 
@@ -322,6 +323,7 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     char *labelName = *lineStart;
     DEBUG_LOG ("labelName = \"%s\";", labelName);
     *lineStart += wordLen;  
+    DEBUG_LOG ("*lineStart(after += WordLen) = \"%s\";", *lineStart);
     // Looks like shit tbh.
     // I want to rewrite entire assembler and make some kind of tokenizator.
     // Again...
@@ -333,8 +335,9 @@ int AddLabel (asm_t *myAsm, char **lineStart)
 
     if (idx >= 0)
     {
+        // FIXME: copy paste
         DEBUG_LOG ("%s", "idx >= 0");
-        myAsm->labels[idx].name = (labelName);
+        myAsm->labels[idx].name = labelName;
         myAsm->labels[idx].hash = labelHash;
         myAsm->labels[idx].value = (ssize_t)myAsm->ip;
      
@@ -343,7 +346,7 @@ int AddLabel (asm_t *myAsm, char **lineStart)
     else
     {
         DEBUG_LOG ("%s", "idx < 0");
-        myAsm->labels[myAsm->labelIdx].name = (labelName);
+        myAsm->labels[myAsm->labelIdx].name = labelName;
         myAsm->labels[myAsm->labelIdx].hash = labelHash;
         myAsm->labels[myAsm->labelIdx].value = (ssize_t)myAsm->ip;
      
@@ -437,6 +440,7 @@ int AssembleLine (asm_t *myAsm, size_t strIdx, size_t pass)
     // TODO: new function TryFindLabel() (like FindCommand())
     if (lineStart[0] == ':')
     {
+        // FIXME: Check for trash before Adding Label
         DEBUG_LOG ("%s", "calls AddLabel()");
 
         int status = AddLabel (myAsm, &lineStart);
@@ -561,12 +565,11 @@ int CheckTrash (asm_t *myAsm, char *linePtr)
     DEBUG_LOG ("%s", "CheckTrash()");
     DEBUG_LOG ("linePtr = \"%s\";", linePtr);
 
-    // while (linePtr < line.start + line.len)
     while (*linePtr != '\0' && linePtr < line.start + line.len)
     {
         DEBUG_LOG ("\'%c\' - %d", *linePtr, *linePtr);
 
-        if (*linePtr != ' ')
+        if (!isspace(*linePtr))
         {
             ERROR_PRINT ("%s:%lu ERROR - trash symbols in the end of line \"%s\"",
                          myAsm->fileName, myAsm->lineNumber, linePtr);
@@ -619,7 +622,9 @@ int PrintHeader (FILE *outputFile, asm_t *myAsm)
     if (status < 0)
         return COMMON_ERROR_WRITE_TO_FILE;
 
-    status = fprintf (outputFile, "%lu ", myAsm->instructionsCnt);
+    // -1 is because myAsm->instructionsCnt = myAsm->ip + 1;
+    // i do not remember why, but yes
+    status = fprintf (outputFile, "%lu ", myAsm->instructionsCnt - 1);
     if (status < 0)
         return COMMON_ERROR_WRITE_TO_FILE;
 

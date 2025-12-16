@@ -8,6 +8,9 @@
 #include "debug.h"
 #include "file.h"
 
+
+// :labelName trash
+// SHOULD BE DETECED
 int main (int argc, char **argv)
 {
     if (argc != 2)
