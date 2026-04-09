@@ -1,3 +1,5 @@
+#!/bin/sh
+
 clear
 cd asm
 ./asm my_asm/$1.my_asm
